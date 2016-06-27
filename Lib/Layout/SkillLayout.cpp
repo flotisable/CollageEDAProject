@@ -48,7 +48,7 @@ bool SkillLayout::drawMos( Mos *mos )
   success &= drawRect( "METAL1" , mos->source   ()[Mos::METAL] + center );
   success &= drawRect( "METAL1" , mos->drain    ()[Mos::METAL] + center );
   
-  for( int i = Mos::CONTACT ; i < mos->source().size() ; i++ )
+  for( unsigned int i = Mos::CONTACT ; i < mos->source().size() ; i++ )
   {
      success &= drawRect( "CONT" , mos->source()[i] + center );
      success &= drawRect( "CONT" , mos->drain ()[i] + center );
@@ -102,7 +102,7 @@ bool SkillLayout::drawSubckt( ICModel *subckt )
   vector<Node*> &nets         = subckt->net       ();
   vector<Node*> &ios          = subckt->io        ();
 
-  for( int i = 0 ; i < mosCells.size() ; i++ )
+  for( unsigned int i = 0 ; i < mosCells.size() ; i++ )
   {
      MosNode  *node     = static_cast<MosNode*> ( mosCells[i]   );
      
@@ -111,7 +111,7 @@ bool SkillLayout::drawSubckt( ICModel *subckt )
      center   -= node->center();
   }
 
-  for( int i = 0 ; i < subcktCells.size() ; i++ )
+  for( unsigned int i = 0 ; i < subcktCells.size() ; i++ )
   {
      SubcktNode   *node   = static_cast<SubcktNode*>  ( subcktCells[i]  );
      SubcktModel  *model  = static_cast<SubcktModel*> ( node->model()   );
@@ -124,12 +124,12 @@ bool SkillLayout::drawSubckt( ICModel *subckt )
      center   -= node->center ();
   }
 
-  for( int i = 0 ; i < ios.size() ; i++ )
+  for( unsigned int i = 0 ; i < ios.size() ; i++ )
   {
      vector<Rectangle>  &netlist    = static_cast<NetNode*>( ios[i] )->nets();
      string             layer;
 
-     for( int j = 0 ; j < netlist.size() ; j++ )
+     for( unsigned int j = 0 ; j < netlist.size() ; j++ )
      {
         if      ( netlist[j].height() > netlist[j].width() )
           layer = "METAL1";
@@ -146,12 +146,12 @@ bool SkillLayout::drawSubckt( ICModel *subckt )
      }
   }
 
-  for( int i = 0 ; i < nets.size() ; i++ )
+  for( unsigned int i = 0 ; i < nets.size() ; i++ )
   {
      vector<Rectangle>  &netlist = static_cast<NetNode*>( nets[i] )->nets();
      string             layer;
      
-     for( int j = 0 ; j < netlist.size() ; j++ )
+     for( unsigned int j = 0 ; j < netlist.size() ; j++ )
      {
         if      ( netlist[j].height() > netlist[j].width() )
           layer = "METAL1";

@@ -56,11 +56,11 @@ class ViaDevice
   
     TechFile  *tech;
     
-    string  via;
-    int     m_type;
-    Point   m_center;
-    int     m_row;
-    int     m_col;
+    string        via;
+    int           m_type;
+    Point         m_center;
+    unsigned int  m_row;
+    unsigned int  m_col;
     
     vector<vector<Rectangle>> contacts;
     Rectangle                 m;

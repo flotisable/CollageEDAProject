@@ -20,7 +20,7 @@ void ViaDevice::setRow( unsigned int row )
   {
     contacts.resize( row );
     if( row > m_row )
-      for( register int i = m_row ; i < row ; i++ )
+      for( register unsigned int i = m_row ; i < row ; i++ )
          contacts[i].resize( m_col );
   
     m_row = row;
@@ -31,7 +31,7 @@ void ViaDevice::setColumn( unsigned int col )
 {
   if( col )
   {
-    for( register int i = 0 ; i < m_row ; i++ )
+    for( register unsigned int i = 0 ; i < m_row ; i++ )
        contacts[i].resize( col );
     m_col = col;
   }
@@ -50,9 +50,9 @@ void ViaDevice::generate()
   model.setWidth ( conWidth );
   model.setHeight( conWidth );
 
-  for( register int i = 0 ; i < m_row ; i++ )
+  for( register unsigned int i = 0 ; i < m_row ; i++ )
   {
-     for( register int j = 0 ; j < m_col ; j++ )
+     for( register unsigned int j = 0 ; j < m_col ; j++ )
      {
         model.setCenter( conX , conY );
         contacts[i][j] = model;

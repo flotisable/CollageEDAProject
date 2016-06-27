@@ -47,7 +47,7 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
   vector<Node*> &mosNodes = model->model()->mosCell();
   int           pmosNum   = 0;
 
-  for( int i = 0 ; i < mosNodes.size() ; i++ )
+  for( unsigned int i = 0 ; i < mosNodes.size() ; i++ )
   {
      int cost = 0;
      Mos *mos = static_cast<MosNode*>( mosNodes[i] )->model()->model();
@@ -118,7 +118,7 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
   // end sort
 
   // calculate cost
-  for( int i = 0 ; i < mosNodes.size() ; i++ )
+  for( unsigned int i = 0 ; i < mosNodes.size() ; i++ )
      mosNodes[i]->setCost( mosNodes.size() - i );
   // end calculate cost
 
@@ -143,7 +143,7 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
     bool  placePRight = true;
     bool  placeNRight = true;
 
-    for( int i = 0 ; i < node->connect().size() ; i++ )
+    for( unsigned int i = 0 ; i < node->connect().size() ; i++ )
     {
        vector<Node*> *net = &node->connect()[i]->connect();
 
@@ -154,7 +154,7 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
                 static_cast<bool (*)( Node* , Node* )>
                 ( Node::costCompare ) );
 
-       for( int i = 0 ; i < net->size() ; i++ )
+       for( unsigned int i = 0 ; i < net->size() ; i++ )
           if( net->at( i )->visit() != VISIT )
           {
             int x;
@@ -222,7 +222,7 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
                         / 2;
   
 
-  for( int i = 0 ; i < mosNodes.size() ; i++ )
+  for( unsigned int i = 0 ; i < mosNodes.size() ; i++ )
   {
      double x = xbias + mosNodes[i]->center().x() * mosWidth;
      double y = ybias + mosNodes[i]->center().y() * p2n;
@@ -255,7 +255,7 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
   vector<Node*> &subcktNodes  = model->model()->subcktCell();
 
   // caculate cost
-  for( int i = 0 ; i < subcktNodes.size() ; i++ )
+  for( unsigned int i = 0 ; i < subcktNodes.size() ; i++ )
   {
      vector<Node*>  &nets   = subcktNodes[i]->connect();
      SubcktModel    *subckt = static_cast<SubcktNode*>( subcktNodes[i] )
@@ -265,14 +265,14 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
      subcktNodes[i]->setHeight( subckt->height()  );
      subcktNodes[i]->setWidth ( subckt->width()   );
      
-     for( int j = 0 ; j < nets.size() ; j++ )
+     for( unsigned int j = 0 ; j < nets.size() ; j++ )
      {
         if( nets[j]->type() == Node::VDD || nets[j]->type() == Node::VSS )
           continue;
 
         cost += nets[j]->connect().size() - 1;
         
-        for( int k = 0 ; k < j ; k++ )
+        for( unsigned int k = 0 ; k < j ; k++ )
            if( nets[j]->name() == nets[k]->name() )
            {
              cost -= nets[j]->connect().size() - 1;
@@ -304,7 +304,7 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
     int           layer   = 1;
     int           direct  = 0;
     
-    for( int i = 0 ; i < node->connect().size() ; i++ )
+    for( unsigned int i = 0 ; i < node->connect().size() ; i++ )
     {
        vector<Node*> &net = node->connect()[i]->connect();
     
@@ -315,7 +315,7 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
                 static_cast<bool (*)( Node* , Node* )>
                 ( Node::costCompare ) );
 
-       for( int j = 0 ; j < net.size() ; j++ )
+       for( unsigned int j = 0 ; j < net.size() ; j++ )
           if( net[j]->visit() != VISIT )
           {
             net[j]->setVisit( VISIT );
@@ -371,7 +371,7 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
   int x = xMin;
   int y = yMin;
 
-  for( int i = 0 ; i < subcktNodes.size() ; i++ )
+  for( unsigned int i = 0 ; i < subcktNodes.size() ; i++ )
   {
      if( y < subcktNodes[i]->center().y() )
      {
@@ -390,7 +390,7 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
   x = xMin;
   y = yMin;
 
-  for( int i = 0 ; i < subcktNodes.size() ; i++ )
+  for( unsigned int i = 0 ; i < subcktNodes.size() ; i++ )
   {
      if( x < subcktNodes[i]->center().x() )
      {
@@ -421,20 +421,20 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
   contour.push_back( Point( 0       , 0 ) );
   contour.push_back( Point( DBL_MAX , 0 ) );
 
-  for( int i = 0 ; i < subcktNodes.size() ; i++ )
+  for( unsigned int i = 0 ; i < subcktNodes.size() ; i++ )
   {
-     int    front   = -1;
-     int    end     = contour.size() - 1;
-     double localXr;
-     double halfH   = subcktNodes[i]->height()  / 2;
-     double halfW   = subcktNodes[i]->width ()  / 2;
+     int          front   = -1;
+     unsigned int end     = contour.size() - 1;
+     double       localXr;
+     double       halfH   = subcktNodes[i]->height()  / 2;
+     double       halfW   = subcktNodes[i]->width ()  / 2;
      
      if( subcktNodes[i]->center().x() == xMin )  localX = localXr = 0;
      
      localY   =   0;
      localXr  +=  subcktNodes[i]->width();
   
-     for( int j = 0 ; j < contour.size() ; j++ )
+     for( unsigned int j = 0 ; j < contour.size() ; j++ )
      {
         if( front == -1 )
         {
@@ -442,9 +442,9 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
           else if ( contour[j].x() == localX )  front = j + 1;
           else                                  continue;
         }
-        if( localX < contour[j].x() && contour[j].x() < localXr     ||
-            contour[j].x() == localX  && contour[j+1].x() != localX ||
-            contour[j].x() == localXr && contour[j+1].x() == localXr )
+        if( ( localX < contour[j].x() && contour[j].x() < localXr       ) ||
+            ( contour[j].x() == localX  && contour[j+1].x() != localX   ) ||
+            ( contour[j].x() == localXr && contour[j+1].x() == localXr  ) )
         {
           if( contour[j].y() > localY ) localY  = contour[j].y();
         }
@@ -478,7 +478,7 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
   double  width  = xMax;
   Point   bias( - width / 2 , - height / 2 );
   
-  for( int i = 0 ; i < subcktNodes.size() ; i++ )
+  for( unsigned int i = 0 ; i < subcktNodes.size() ; i++ )
      subcktNodes[i]->setCenter( bias + subcktNodes[i]->center() );
 
   model->setCenter( 0 , 0   );

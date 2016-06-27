@@ -12,12 +12,12 @@ ICModel::ICModel( TechFile *techFile ) : tech( techFile ) , main( true )
 
 ICModel::~ICModel()
 {
-	for( int i = 0 ; i < nodes.size() ; i++ )
-     for( int j = 0 ; j < nodes[i].size() ; j++ )
+	for( unsigned int i = 0 ; i < nodes.size() ; i++ )
+     for( unsigned int j = 0 ; j < nodes[i].size() ; j++ )
         if( nodes[i][j] ) delete nodes[i][j];
 
-	for( int i = 0 ; i < models.size() ; i++ )
-     for( int j = 0 ; j < models[i].size() ; j++ )
+	for( unsigned int i = 0 ; i < models.size() ; i++ )
+     for( unsigned int j = 0 ; j < models[i].size() ; j++ )
         if( models[i][j] )
         {
           switch( models[i][j]->type() )
@@ -44,7 +44,7 @@ int ICModel::cellNum() const
 {
   int number = 0;
 
-  for( register int i = Node::NET + 1 ; i < nodes.size() ; i++ )
+  for( register unsigned int i = Node::NET + 1 ; i < nodes.size() ; i++ )
      number += nodes[i].size();
   return number;
 }
@@ -53,7 +53,7 @@ int ICModel::nodeNum() const
 {
   int number = 0;
 
-  for( register int i = 0 ; i < nodes.size() ; i++ )
+  for( register unsigned int i = 0 ; i < nodes.size() ; i++ )
      number += nodes[i].size();
   return number;
 }
@@ -62,7 +62,7 @@ int ICModel::searchNode( Node::Type type , const string &name )
 {
   if( type == Node::UNKNOWN ) return -1;
 
-  for( register int i = 0 ; i < nodes[type].size() ; i++ )
+  for( register unsigned int i = 0 ; i < nodes[type].size() ; i++ )
      if( nodes[type][i]->name() == name ) return i;
   return -1;
 }
@@ -83,7 +83,7 @@ bool ICModel::generate()
 {
   if( !tech ) return false;
 
-  for( int i = 0 ; i < models[Model::MOS].size() ; i++ )
+  for( unsigned int i = 0 ; i < models[Model::MOS].size() ; i++ )
   {
      Mos *mos = static_cast<MosModel*>( models[Model::MOS][i] )->model();
 
@@ -91,7 +91,7 @@ bool ICModel::generate()
      mos->generate();
   }
 
-  for( int i = 0 ; i < models[Model::SUBCKT].size() ; i++ )
+  for( unsigned int i = 0 ; i < models[Model::SUBCKT].size() ; i++ )
   {
      ICModel *model = static_cast<SubcktModel*>( models[Model::SUBCKT][i] )
                       ->model();
@@ -105,7 +105,7 @@ bool ICModel::generate()
 
 int ICModel::searchMos( MosModel *model )
 {
-  for( register int i = 0 ; i < models[Model::MOS].size() ; i++ )
+  for( register unsigned int i = 0 ; i < models[Model::MOS].size() ; i++ )
   {
      MosModel *mosModel = static_cast<MosModel*>( models[Model::MOS][i] );
      if( *mosModel->model() == *model->model() ) return i;
@@ -115,7 +115,7 @@ int ICModel::searchMos( MosModel *model )
 
 int ICModel::searchSubckt( SubcktModel *model )
 {
-  for( register int i = 0 ; i < models[Model::SUBCKT].size() ; i++ )
+  for( register unsigned int i = 0 ; i < models[Model::SUBCKT].size() ; i++ )
   {
      SubcktModel *subcktModel = static_cast<SubcktModel*>
                                 ( models[Model::SUBCKT][i] );

@@ -64,7 +64,7 @@ bool TechFile::write( const char *fileName )
     file << left;
     file << "Tech Params:\n\n";
 
-    for( register int i = 0 ; i < techParams.size() ; i++ )
+    for( register unsigned int i = 0 ; i < techParams.size() ; i++ )
     {
        file << setw( TAB ) << techParams[i].name;
        file << setw( TAB ) << techParams[i].value;
@@ -73,8 +73,8 @@ bool TechFile::write( const char *fileName )
 
     file << "\nSpacing Rules:\n\n";
 
-    for( register int i = 0 ; i < rules.size() ; i++ )
-       for( register int j = 0 ; j < rules[i].size() ; j++ )
+    for( register unsigned int i = 0 ; i < rules.size() ; i++ )
+       for( register unsigned int j = 0 ; j < rules[i].size() ; j++ )
        {
           file << setw( TAB ) << SpacingRule::map( rules[i][j].rule );
           file << setw( TAB ) << rules[i][j].layer1;
@@ -93,7 +93,7 @@ bool TechFile::write( const char *fileName )
 
 double TechFile::param( const string &name )
 {
-  for( register int i = 0 ; i < techParams.size() ; i++ )
+  for( register unsigned int i = 0 ; i < techParams.size() ; i++ )
      if( techParams[i].name == name ) return techParams[i].value;
   return -1;
 }
@@ -101,7 +101,7 @@ double TechFile::param( const string &name )
 double TechFile::rule( SpacingRule::Type rule , string layer1 ,
                                                 string layer2 )
 {
-  for( register int i = 0 ; i < rules[rule].size() ; i++ )
+  for( register unsigned int i = 0 ; i < rules[rule].size() ; i++ )
      if( rules[rule][i].layer1 == layer1 &&
          ( layer2.empty() || rules[rule][i].layer2 == layer2 ) )
        return rules[rule][i].value;
@@ -114,8 +114,8 @@ double TechFile::rule( SpacingRule::Type rule , string layer1 ,
 
 bool TechFile::findBlock()
 {
-  int   startIndex = buffer.find( "(" );
-  char  c;
+  unsigned int  startIndex = buffer.find( "(" );
+  char          c;
 
   buffer.erase( startIndex );
   word = buffer;
@@ -145,8 +145,8 @@ void TechFile::readInfo( const string &id , void (TechFile::*read)() )
 
         case '(':
 
-          int endIndex;
-          int commentIndex;
+          unsigned int  endIndex;
+          unsigned int  commentIndex;
 
           getline( file , buffer );
           commentIndex  = buffer.find( ';' );
@@ -165,11 +165,11 @@ void TechFile::readInfo( const string &id , void (TechFile::*read)() )
 
 void TechFile::catchWord()
 {
-  for( register int i = 0 ; i < buffer.length() ; i++ )
+  for( register unsigned int i = 0 ; i < buffer.length() ; i++ )
   {
      if( nullChar( buffer[i] ) ) continue;
 
-     for( register int j = i ; j < buffer.length() ; j++ )
+     for( register unsigned int j = i ; j < buffer.length() ; j++ )
         if( nullChar( buffer[j] ) )
         {
           word = buffer.substr( i , j - i );

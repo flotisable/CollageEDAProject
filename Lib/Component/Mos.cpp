@@ -121,13 +121,13 @@ bool Mos::write( const char *fileName )
     writeLayer( file , "Diffusion"   , diff     );
     writeLayer( file , "SourceMetal" , s[METAL] );
 
-    for( int i = CONTACT ; i < s.size() ; i++ )
+    for( unsigned int i = CONTACT ; i < s.size() ; i++ )
        writeLayer( file , "SourceContact" , s[i] );
 
     writeLayer( file , "Gate"        , g        );
     writeLayer( file , "DrainMetal"  , d[METAL] );
 
-    for( int i = CONTACT ; i < d.size() ; i++ )
+    for( unsigned int i = CONTACT ; i < d.size() ; i++ )
        writeLayer( file , "DrainContact" , d[i] );
 
     writeLayer( file , "Implant"     , imp      );
@@ -190,13 +190,13 @@ ostream& operator<<( ostream &out , Mos &mos )
   out << "DIFF   " << mos.diffusion()          << endl;
   out << "METAL1 " << mos.source()[Mos::METAL] << endl;
 
-  for( int i = Mos::CONTACT ; i < mos.source().size() ; i++ )
+  for( unsigned int i = Mos::CONTACT ; i < mos.source().size() ; i++ )
      out << "CONT   " << mos.source()[i] << endl;
 
   out << "POLY1  " << mos.gate()              << endl;
   out << "METAL1 " << mos.drain()[Mos::METAL] << endl;
 
-  for( int i = Mos::CONTACT ; i < mos.drain().size() ; i++ )
+  for( unsigned int i = Mos::CONTACT ; i < mos.drain().size() ; i++ )
      out << "CONT   " << mos.drain()[i] << endl;
 
   string impLayer;
