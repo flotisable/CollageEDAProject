@@ -1,6 +1,8 @@
 #ifndef SUBCKT_NODE_H
 #define SUBCKT_NODE_H
 
+#include <ostream>
+
 #include "Node.h"
 
 class SubcktModel;
@@ -19,6 +21,8 @@ class SubcktNode : public Node
 
     SubcktModel *subckt;
 };
+
+ostream& operator<<( ostream &out , SubcktNode &node );
 
 // SubcktNode inline member function
 inline SubcktNode::SubcktNode( SubcktModel *model )

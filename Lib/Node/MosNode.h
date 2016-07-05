@@ -1,6 +1,8 @@
 #ifndef MOS_NODE_H
 #define MOS_NODE_H
 
+#include <ostream>
+
 #include "Node.h"
 
 class MosModel;
@@ -28,6 +30,8 @@ class MosNode : public Node
 
     MosModel *mos;
 };
+
+ostream& operator<<( ostream &out , MosNode &node );
 
 // MosNode inline member function
 inline MosNode::MosNode( MosModel *model ) : Node( MOS ) , mos( model ) {}

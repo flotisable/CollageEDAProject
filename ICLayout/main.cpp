@@ -1,4 +1,4 @@
-#define CLASS_TEST
+//#define CLASS_TEST
 
 #ifndef CLASS_TEST
 

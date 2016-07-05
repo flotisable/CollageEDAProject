@@ -305,12 +305,6 @@ int Hspice::searchModel( const string &name )
 
 void Hspice::writeSubcktModel( SubcktModel *model )
 {
-  vector<Node*>   &io           = model->model()->io();
-  vector<Node*>   &net          = model->model()->net();
-  vector<Node*>   &mosCell      = model->model()->mosCell();
-  vector<Node*>   &subcktCell   = model->model()->subcktCell();
-  vector<Model*>  &subcktModel  = model->model()->subcktModel();
-
   file << "subckt name : " << model->name()               << endl;
   file << "height      : " << model->height()             << endl;
   file << "width       : " << model->width()              << endl;
@@ -319,73 +313,21 @@ void Hspice::writeSubcktModel( SubcktModel *model )
   file << "netnum      : " << model->model()->netNum  ()  << endl;
   file << "ionum       : " << model->model()->ioNum   ()  << endl;
 
-  for( unsigned int i = 0 ; i < io.size() ; i++ )
-	{
-	   file << io[i]->name() << "\t";
-		 file << io[i]->type() << "\t";
+  for( Node *node : model->model()->io() )
+		 file << *static_cast<NetNode*>( node ) << endl;
 
-		 for( register unsigned int j = 0 ; j < io[i]->connect().size() ; j++ )
-				file << io[i]->connect()[j]->name() << "\t";
+  for( Node *node : model->model()->net() )
+		 file << *static_cast<NetNode*>( node ) << endl;
 
-     NetNode *node = static_cast<NetNode*>( io[i] );
+	for( Node *node : model->model()->mosCell() )
+		 file << *static_cast<MosNode*>( node ) << endl;
 
-     for( register unsigned int j = 0 ; j < node->nets().size() ; j++ )
-        file << node->nets()[j]/*.center()*/;
+	for( Node *node : model->model()->subcktCell() )
+     file << *static_cast<SubcktNode*>( node ) << endl;
 
-		 file << endl;
-	}
-
-  for( unsigned int i = 0 ; i < net.size() ; i++ )
-	{
-	   file << net[i]->name() << "\t";
-	   file << net[i]->type() << "\t";
-
-		 for( register unsigned int j = 0 ; j < net[i]->connect().size() ; j++ )
-		    file << net[i]->connect()[j]->name() << "\t";
-     
-     NetNode* node = static_cast<NetNode*>( net[i] );
-
-     for( register unsigned int j = 0 ; j < node->nets().size() ; j++ )
-        file << node->nets()[j]/*.center()*/;
-
-		 file << endl;
-	}
-
-	for( unsigned int i = 0 ; i < mosCell.size() ; i++ )
-	{
-     Mos* mos = static_cast<MosNode*>( mosCell[i] )->model()->model();
-
-     file << mosCell[i]->name()   << "\t";
-     file << mosCell[i]->type()   << "\t";
-     file << mosCell[i]->center() << "\t";
-     file << mos->type()          << "\t";
-     file << mos->w()             << "\t";
-     file << mos->l()             << "\t";
-     file << mos->m()             << "\t";
-
-		 for( unsigned int j = 0 ; j < mosCell[i]->connect().size() ; j++ )
-				file << mosCell[i]->connect()[j]->name() << "\t";
-
-		 file << endl;
-	}
-
-	for( unsigned int i = 0 ; i < subcktCell.size() ; i++ )
-	{
-     SubcktModel *model = static_cast<SubcktNode*>( subcktCell[i] )->model();
-
-     file << subcktCell[i]->name()    << "\t";
-     file << subcktCell[i]->type()    << "\t";
-     file << subcktCell[i]->center()  << "\t";
-     file << model->name()            << "\t";
-
-     for( unsigned int j = 0 ; j < subcktCell[i]->connect().size() ; j++ )
-        file << subcktCell[i]->connect()[j]->name() << "\t";
-
-     file << endl;
-  }
   file << endl;
 
-  for( unsigned int i = 0 ; i < subcktModel.size() ; i++ )
-     writeSubcktModel( static_cast<SubcktModel*>( subcktModel[i] ) );
+  for( Model *subcktModel : model->model()->subcktModel() )
+     writeSubcktModel( static_cast<SubcktModel*>( subcktModel ) );
   file << endl;
 }
