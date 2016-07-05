@@ -64,22 +64,22 @@ bool TechFile::write( const char *fileName )
     file << left;
     file << "Tech Params:\n\n";
 
-    for( register unsigned int i = 0 ; i < techParams.size() ; i++ )
+    for( TechParam &parameter : techParams )
     {
-       file << setw( TAB ) << techParams[i].name;
-       file << setw( TAB ) << techParams[i].value;
+       file << setw( TAB ) << parameter.name;
+       file << setw( TAB ) << parameter.value;
        file << endl;
     }
 
     file << "\nSpacing Rules:\n\n";
 
-    for( register unsigned int i = 0 ; i < rules.size() ; i++ )
-       for( register unsigned int j = 0 ; j < rules[i].size() ; j++ )
+    for( vector<SpacingRule> &specRule : rules )
+       for( SpacingRule &rule : specRule )
        {
-          file << setw( TAB ) << SpacingRule::map( rules[i][j].rule );
-          file << setw( TAB ) << rules[i][j].layer1;
-          file << setw( TAB ) << rules[i][j].layer2;
-          file << setw( TAB ) << rules[i][j].value;
+          file << setw( TAB ) << SpacingRule::map( rule.rule );
+          file << setw( TAB ) << rule.layer1;
+          file << setw( TAB ) << rule.layer2;
+          file << setw( TAB ) << rule.value;
           file << endl;
        }
 
@@ -93,18 +93,18 @@ bool TechFile::write( const char *fileName )
 
 double TechFile::param( const string &name )
 {
-  for( register unsigned int i = 0 ; i < techParams.size() ; i++ )
-     if( techParams[i].name == name ) return techParams[i].value;
+  for( TechParam &parameter : techParams )
+     if( parameter.name == name ) return parameter.value;
   return -1;
 }
 
 double TechFile::rule( SpacingRule::Type rule , string layer1 ,
                                                 string layer2 )
 {
-  for( register unsigned int i = 0 ; i < rules[rule].size() ; i++ )
-     if( rules[rule][i].layer1 == layer1 &&
-         ( layer2.empty() || rules[rule][i].layer2 == layer2 ) )
-       return rules[rule][i].value;
+  for( SpacingRule &specRule : rules[rule] )
+     if( specRule.layer1 == layer1 &&
+         ( layer2.empty() || specRule.layer2 == layer2 ) )
+       return specRule.value;
   return -1;
 }
 

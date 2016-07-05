@@ -12,31 +12,31 @@ ICModel::ICModel( TechFile *techFile ) : tech( techFile ) , main( true )
 
 ICModel::~ICModel()
 {
-	for( unsigned int i = 0 ; i < nodes.size() ; i++ )
-     for( unsigned int j = 0 ; j < nodes[i].size() ; j++ )
-        if( nodes[i][j] ) delete nodes[i][j];
+	for( vector<Node*> &nodeVector : nodes )
+     for( Node *node : nodeVector )
+        if( node ) delete node;
 
-	for( unsigned int i = 0 ; i < models.size() ; i++ )
-     for( unsigned int j = 0 ; j < models[i].size() ; j++ )
-        if( models[i][j] )
+	for( vector<Model*> &modelVector : models )
+     for( Model *model : modelVector )
+        if( model )
         {
-          switch( models[i][j]->type() )
+          switch( model->type() )
           {
             case Model::MOS:
             {
-              MosModel *model = static_cast<MosModel*>( models[i][j] );
-              if( model->model() ) delete model->model();
+              MosModel *modelT = static_cast<MosModel*>( model );
+              if( modelT->model() ) delete modelT->model();
               break;
             }
             case Model::SUBCKT:
             {
-              SubcktModel *model = static_cast<SubcktModel*>( models[i][j] );
-              if( model->model() ) delete model->model();
+              SubcktModel *modelT = static_cast<SubcktModel*>( model );
+              if( modelT->model() ) delete modelT->model();
               break;
             }
             default: break;
           }
-          delete models[i][j];
+          delete model;
         }
 }
 
@@ -53,8 +53,8 @@ int ICModel::nodeNum() const
 {
   int number = 0;
 
-  for( register unsigned int i = 0 ; i < nodes.size() ; i++ )
-     number += nodes[i].size();
+  for( auto &nodeVector : nodes )
+     number += nodeVector.size();
   return number;
 }
 
@@ -83,21 +83,20 @@ bool ICModel::generate()
 {
   if( !tech ) return false;
 
-  for( unsigned int i = 0 ; i < models[Model::MOS].size() ; i++ )
+  for( Model *model : models[Model::MOS] )
   {
-     Mos *mos = static_cast<MosModel*>( models[Model::MOS][i] )->model();
+     Mos *mos = static_cast<MosModel*>( model )->model();
 
      mos->setTechFile( tech );
      mos->generate();
   }
 
-  for( unsigned int i = 0 ; i < models[Model::SUBCKT].size() ; i++ )
+  for( Model *model : models[Model::SUBCKT] )
   {
-     ICModel *model = static_cast<SubcktModel*>( models[Model::SUBCKT][i] )
-                      ->model();
+     ICModel *icModel = static_cast<SubcktModel*>( model )->model();
 
-     model->setTechFile( tech );
-     model->generate();
+     icModel->setTechFile( tech );
+     icModel->generate();
   }
   return true;
 }

@@ -47,10 +47,10 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
   vector<Node*> &mosNodes = model->model()->mosCell();
   int           pmosNum   = 0;
 
-  for( unsigned int i = 0 ; i < mosNodes.size() ; i++ )
+  for( Node *mosNode : mosNodes )
   {
      int cost = 0;
-     Mos *mos = static_cast<MosNode*>( mosNodes[i] )->model()->model();
+     Mos *mos = static_cast<MosNode*>( mosNode )->model()->model();
 
      if( mos->type() == Mos::PMOS )
      {
@@ -60,7 +60,7 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
 
      for( int j = 0 ; j < MosNode::PIN_NUM ; j++ )
      {
-        NetNode *node = static_cast<NetNode*>( mosNodes[i]->connect()[j] );
+        NetNode *node = static_cast<NetNode*>( mosNode->connect()[j] );
 
         if( node->type() == Node::VDD || node->type() == Node::VSS )
           continue;
@@ -68,13 +68,13 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
         cost += ( node->connect().size() - 1 );
 
         for( register int k = 0 ; k < j ; k++ )
-           if( node->name() == mosNodes[i]->connect()[k]->name() )
+           if( node->name() == mosNode->connect()[k]->name() )
            {
              cost -= ( node->connect().size() - 1 );
              break;
            }
      }
-     mosNodes[i]->setCost( cost );
+     mosNode->setCost( cost );
   }
   // end calculate cost
   // sort
@@ -143,27 +143,27 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
     bool  placePRight = true;
     bool  placeNRight = true;
 
-    for( unsigned int i = 0 ; i < node->connect().size() ; i++ )
+    for( Node *netNode : node->connect() )
     {
-       vector<Node*> *net = &node->connect()[i]->connect();
+       vector<Node*> &mos = netNode->connect();
 
-       if( !is_sorted( net->begin() , net->end() ,
+       if( !is_sorted( mos.begin() , mos.end() ,
                         static_cast<bool (*)( Node* , Node* )>
                         ( Node::costCompare ) ) )
-         sort(  net->begin() , net->end() ,
+         sort(  mos.begin() , mos.end() ,
                 static_cast<bool (*)( Node* , Node* )>
                 ( Node::costCompare ) );
 
-       for( unsigned int i = 0 ; i < net->size() ; i++ )
-          if( net->at( i )->visit() != VISIT )
+       for( Node *node : mos )
+          if( node->visit() != VISIT )
           {
             int x;
             int y;
 
-            net->at(i)->setVisit( VISIT );
-            placeQueue.push( net->at( i ) );
+            node->setVisit( VISIT );
+            placeQueue.push( node );
 
-            if( net->at( i )->cost() > minCost )
+            if( node->cost() > minCost )
             {
               x           = ( placePRight ) ? prx++ : plx--;
               y           = 0;
@@ -184,7 +184,7 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
                 placeNmos = true;
               }
             }
-            net->at( i )->setCenter( x , y );
+            node->setCenter( x , y );
           }
     }
     placeQueue.pop();
@@ -222,12 +222,12 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
                         / 2;
   
 
-  for( unsigned int i = 0 ; i < mosNodes.size() ; i++ )
+  for( Node *mosNode : mosNodes )
   {
-     double x = xbias + mosNodes[i]->center().x() * mosWidth;
-     double y = ybias + mosNodes[i]->center().y() * p2n;
+     double x = xbias + mosNode->center().x() * mosWidth;
+     double y = ybias + mosNode->center().y() * p2n;
 
-     mosNodes[i]->setCenter( x , y );
+     mosNode->setCenter( x , y );
   }
   
   model->setHeight( height  );
@@ -255,15 +255,14 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
   vector<Node*> &subcktNodes  = model->model()->subcktCell();
 
   // caculate cost
-  for( unsigned int i = 0 ; i < subcktNodes.size() ; i++ )
+  for( Node *node : subcktNodes )
   {
-     vector<Node*>  &nets   = subcktNodes[i]->connect();
-     SubcktModel    *subckt = static_cast<SubcktNode*>( subcktNodes[i] )
-                              ->model();
+     vector<Node*>  &nets   = node->connect();
+     SubcktModel    *subckt = static_cast<SubcktNode*>( node )->model();
      int            cost    = 0;
   
-     subcktNodes[i]->setHeight( subckt->height()  );
-     subcktNodes[i]->setWidth ( subckt->width()   );
+     node->setHeight( subckt->height()  );
+     node->setWidth ( subckt->width()   );
      
      for( unsigned int j = 0 ; j < nets.size() ; j++ )
      {
@@ -279,7 +278,7 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
              break;
            }
      }
-     subcktNodes[i]->setCost( cost );
+     node->setCost( cost );
   }
   // end caculate cost
   
@@ -304,22 +303,22 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
     int           layer   = 1;
     int           direct  = 0;
     
-    for( unsigned int i = 0 ; i < node->connect().size() ; i++ )
+    for( Node *netNode : node->connect() )
     {
-       vector<Node*> &net = node->connect()[i]->connect();
+       vector<Node*> &subckt = netNode->connect();
     
-       if( !is_sorted(  net.begin() , net.end() ,
+       if( !is_sorted(  subckt.begin() , subckt.end() ,
                         static_cast<bool (*)( Node* , Node* )>
                         ( Node::costCompare ) ) )
-         sort(  net.begin() , net.end() ,
+         sort(  subckt.begin() , subckt.end() ,
                 static_cast<bool (*)( Node* , Node* )>
                 ( Node::costCompare ) );
 
-       for( unsigned int j = 0 ; j < net.size() ; j++ )
-          if( net[j]->visit() != VISIT )
+       for( Node *subcktNode : subckt )
+          if( subcktNode->visit() != VISIT )
           {
-            net[j]->setVisit( VISIT );
-            placeQueue.push( net[j] );
+            subcktNode->setVisit( VISIT );
+            placeQueue.push( subcktNode );
             
             do
             {
@@ -345,7 +344,7 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
                 y += layer;
               }
 
-              net[j]->setCenter( x , y );
+              subcktNode->setCenter( x , y );
               if( direct < MAX_DIRECT ) direct++;
               else
               {
@@ -355,9 +354,9 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
               
             }while( find( plane.begin () ,
                           plane.end   () ,
-                          net[j]->center() ) != plane.end() );
+                          subcktNode->center() ) != plane.end() );
             
-            plane.push_back( net[j]->center() );
+            plane.push_back( subcktNode->center() );
           }
     }
     placeQueue.pop();
@@ -371,14 +370,14 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
   int x = xMin;
   int y = yMin;
 
-  for( unsigned int i = 0 ; i < subcktNodes.size() ; i++ )
+  for( Node *node : subcktNodes )
   {
-     if( y < subcktNodes[i]->center().y() )
+     if( y < node->center().y() )
      {
        y++;
        x = xMin;
      }
-     subcktNodes[i]->setCenter( x , y );
+     node->setCenter( x , y );
      x++;
   }
 
@@ -390,14 +389,14 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
   x = xMin;
   y = yMin;
 
-  for( unsigned int i = 0 ; i < subcktNodes.size() ; i++ )
+  for( Node *node : subcktNodes )
   {
-     if( x < subcktNodes[i]->center().x() )
+     if( x < node->center().x() )
      {
        x++;
        y = yMin;
      }
-     subcktNodes[i]->setCenter( x , y );
+     node->setCenter( x , y );
      y++;
   }
   
@@ -421,18 +420,18 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
   contour.push_back( Point( 0       , 0 ) );
   contour.push_back( Point( DBL_MAX , 0 ) );
 
-  for( unsigned int i = 0 ; i < subcktNodes.size() ; i++ )
+  for( Node *node : subcktNodes )
   {
      int          front   = -1;
      unsigned int end     = contour.size() - 1;
      double       localXr;
-     double       halfH   = subcktNodes[i]->height()  / 2;
-     double       halfW   = subcktNodes[i]->width ()  / 2;
+     double       halfH   = node->height()  / 2;
+     double       halfW   = node->width ()  / 2;
      
-     if( subcktNodes[i]->center().x() == xMin )  localX = localXr = 0;
+     if( node->center().x() == xMin )  localX = localXr = 0;
      
      localY   =   0;
-     localXr  +=  subcktNodes[i]->width();
+     localXr  +=  node->width();
   
      for( unsigned int j = 0 ; j < contour.size() ; j++ )
      {
@@ -461,7 +460,7 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
      }
      localY += halfH;
      localX += halfW;
-     subcktNodes[i]->setCenter( localX , localY );
+     node->setCenter( localX , localY );
      localY += halfH;
      localX += halfW;
      if( localY > yMax ) yMax = localY;
@@ -469,17 +468,17 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
      
      contour.erase  ( contour.begin() + front , contour.begin() + end );
      contour.insert ( contour.begin() + front ,
-     {  Point( subcktNodes[i]->left () , subcktNodes[i]->top    () ) ,
-        Point( subcktNodes[i]->right() , subcktNodes[i]->top    () ) ,
-        Point( subcktNodes[i]->right() , subcktNodes[i]->bottom () ) } );
+     {  Point( node->left () , node->top    () ) ,
+        Point( node->right() , node->top    () ) ,
+        Point( node->right() , node->bottom () ) } );
   }
 
   double  height = yMax;
   double  width  = xMax;
   Point   bias( - width / 2 , - height / 2 );
   
-  for( unsigned int i = 0 ; i < subcktNodes.size() ; i++ )
-     subcktNodes[i]->setCenter( bias + subcktNodes[i]->center() );
+  for( Node *node : subcktNodes )
+     node->setCenter( bias + node->center() );
 
   model->setCenter( 0 , 0   );
   model->setHeight( height  );

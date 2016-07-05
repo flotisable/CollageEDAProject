@@ -38,8 +38,6 @@ bool ICRouting::channelRouting( SubcktModel *model )
 {
   vector<Node*> &mosNodes = model->model()->mosCell();
 
-  cout << model->name() << endl;
-
   // set number 設定編號
   sort( mosNodes.begin() , mosNodes.end() ,
         []( Node *front , Node *back )
@@ -87,24 +85,22 @@ bool ICRouting::channelRouting( SubcktModel *model )
   }
   // end set number 設定編號
 
-  vector<Node*>     &io   = model->model()->io  ();
-  vector<Node*>     &net  = model->model()->net ();
   vector<NetNode*>  nets;
 
   // set cost
-  for( unsigned int i = 0 ; i < io.size() ; i++ )
-     if( io[i]->type() != Node::VDD && io[i]->type() != Node::VSS )
+  for( Node *node : model->model()->io() )
+     if( node->type() != Node::VDD && node->type() != Node::VSS )
      {
-       io[i]->setCost( io[i]->connect().size() );
-       nets.push_back( static_cast<NetNode*>( io[i] ) );
+       node->setCost( node->connect().size() );
+       nets.push_back( static_cast<NetNode*>( node ) );
      }
      else
-       io[i]->setCost( -1 );
+       node->setCost( -1 );
 
-  for( unsigned int i = 0 ; i < net.size() ; i++ )
+  for( Node *node : model->model()->net() )
   {
-     net[i]->setCost( net[i]->connect().size() );
-     nets.push_back( static_cast<NetNode*>( net[i] ) );
+     node->setCost( node->connect().size() );
+     nets.push_back( static_cast<NetNode*>( node ) );
   }
   // end set cost
 
@@ -130,14 +126,14 @@ bool ICRouting::channelRouting( SubcktModel *model )
             } );
 
      // set net segment
-     for( unsigned int j = 0 ; j < mos.size() ; j++ )
+     for( Node *node : mos )
      {
         int   index[MosNode::PIN_NUM-1];
         int   pinIndex  = 0;
         int   bias;
         int   connectMos;
         
-        if( mos[j]->cost() >= nmosBias && nmosBias != -1 )
+        if( node->cost() >= nmosBias && nmosBias != -1 )
         {
           bias        = -nmosBias + nmosFirst;
           connectMos  = Mos::NMOS;
@@ -149,22 +145,22 @@ bool ICRouting::channelRouting( SubcktModel *model )
         }
         net.setHeight( connectMos );
 
-        for( int k = MosNode::D ; k <= MosNode::S ; k++ )
-           if( mos[j]->connect()[k] == nets[i] )
+        for( int j = MosNode::D ; j <= MosNode::S ; j++ )
+           if( node->connect()[j] == nets[i] )
            {
-             index[pinIndex] = ( mos[j]->cost() + bias ) * 3 + k;
+             index[pinIndex] = ( node->cost() + bias ) * 3 + j;
              if( index[pinIndex] > maxPinNum ) maxPinNum = index[pinIndex];
              pinIndex++;
            }
 
-        for( int k = 0 ; k < pinIndex ; k++ )
+        for( int j = 0 ; j < pinIndex ; j++ )
         {
            if( net.center().x() != -1  )
            {
-             net.setCenter( net.center().x() , index[k] );
+             net.setCenter( net.center().x() , index[j] );
              nets[i]->nets().push_back( net );
            }
-           net.setCenter( index[k] , 0 );
+           net.setCenter( index[j] , 0 );
            net.setWidth ( connectMos );
         }
      }
@@ -177,10 +173,10 @@ bool ICRouting::channelRouting( SubcktModel *model )
   vector<vector<int>> vcg;
   
   vcg.resize( maxPinNum + 1 );
-  for( unsigned int i = 0 ; i < vcg.size() ; i++ )
+  for( vector<int> &specVcg : vcg )
   {
-     vcg[i].resize( 2 , -1 );
-     vcg[i].push_back( 0 );
+     specVcg.resize( 2 , -1 );
+     specVcg.push_back( 0 );
   }
 
   if( nmosBias != -1 )
@@ -219,10 +215,9 @@ bool ICRouting::channelRouting( SubcktModel *model )
      interval.setWidth  ( i );
      interval.setHeight ( -1 );
 
-     for( unsigned int j = 0 ; j < netlist.size() ; j++ )
+     for( Rectangle &net : netlist )
      {
-        for(  int k = netlist[j].center().x() ; k < netlist[j].center().y() ;
-              k++ )
+        for(  int k = net.center().x() ; k < net.center().y() ; k++ )
         {
            interval.setCenter( k , k + 1 );
            vcg[k  ][VCG]++;
@@ -230,8 +225,8 @@ bool ICRouting::channelRouting( SubcktModel *model )
            intervals.push_back( interval );
            netInfo[i].push_back( interval );
         }
-        vcg[netlist[j].center().x()][VCG]--;
-        vcg[netlist[j].center().y()][VCG]--;
+        vcg[net.center().x()][VCG]--;
+        vcg[net.center().y()][VCG]--;
      }
   }
   // end put intervals
@@ -315,11 +310,11 @@ bool ICRouting::channelRouting( SubcktModel *model )
            routeNum++;
            routeNumDiff++;
         
-           for( unsigned int k = 0 ; k < netInfo[netNum].size() ; k++ )
-              if( netInfo[netNum][k].center().x() == leftEdge &&
-                  netInfo[netNum][k].center().y() == rightEdge )
+           for( Rectangle &segment : netInfo[netNum] )
+              if( segment.center().x() == leftEdge &&
+                  segment.center().y() == rightEdge )
               {
-                netInfo[netNum][k].setHeight( track );
+                segment.setHeight( track );
                 break;
               }
 
@@ -332,9 +327,9 @@ bool ICRouting::channelRouting( SubcktModel *model )
            if(  netInfo[netNum][0].center().x() < leftEdge &&
                 leftEdge <  netInfo[netNum][netInfo[netNum].size()-1]
                             .center().y() )
-             for( unsigned int j = 0 ; j < netInfo[netNum].size() ; j++ )
-                if( netInfo[netNum][j].center().y() == leftEdge &&
-                    netInfo[netNum][j].height()     == -1 )
+             for( Rectangle &segment : netInfo[netNum] )
+                if( segment.center().y() == leftEdge &&
+                    segment.height()     == -1 )
                 {
                   vcg[leftEdge][Mos::PMOS] = netNum;
                   break;
@@ -362,9 +357,9 @@ bool ICRouting::channelRouting( SubcktModel *model )
           if( netInfo[netNum][0].center().x() < rightEdge &&
               rightEdge < netInfo[netNum][netInfo[netNum].size()-1]
                           .center().y() )
-            for( unsigned int j = 0 ; j < netInfo[netNum].size() ; j++ )
-               if(  netInfo[netNum][j].center().x() == rightEdge &&
-                    netInfo[netNum][j].height()     == -1 )
+            for( Rectangle &segment : netInfo[netNum] )
+               if(  segment.center().x() == rightEdge &&
+                    segment.height()     == -1 )
                {
                  vcg[rightEdge][Mos::PMOS] = netNum;
                  break;
@@ -497,12 +492,7 @@ bool ICRouting::channelRouting( SubcktModel *model )
        Rectangle( -1 , track , 1 , nets[i]->nets().back().center().x() ) );
 
   for( unsigned int i = 0 ; i < netInfo.size() ; i++ )
-  {
-     cout<< i << endl;
-     for( unsigned int j = 0 ; j < netInfo[i].size() ; j++ )
-        cout << netInfo[i][j] << endl;
      nets[i]->nets() = netInfo[i];
-  }
 
   // end rough routing
 
@@ -534,9 +524,9 @@ bool ICRouting::channelRouting( SubcktModel *model )
                                 nmos->implant().width() + nimpSpace ) -
                           3 * ( via12Width + via12Space );
 
-  for( unsigned int i = 0 ; i < nets.size() ; i++ )
+  for( NetNode *node : nets )
   {
-     vector<Rectangle>  &netlist    = nets[i]->nets();
+     vector<Rectangle>  &netlist    = node->nets();
      int                netlistSize = netlist.size();
   
      for( int j = 0 ; j < netlistSize ; j++ )
@@ -689,7 +679,6 @@ bool ICRouting::channelRouting( SubcktModel *model )
         netlist[j].setWidth ( width   );
      }
   }
-
   // end detail routing
 
   return true;

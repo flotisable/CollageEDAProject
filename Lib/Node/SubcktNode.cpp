@@ -16,8 +16,8 @@ ostream& operator<<( ostream &out , SubcktNode &node )
   out << left;
   out << setw( TAB )    << node.model()->name();
   
-  for( unsigned int i = 0 ; i < node.connect().size() ; i++ )
-     out << setw( TAB ) << node.connect()[i]->name();
+  for( Node* nodeConnect : node.connect() )
+     out << setw( TAB ) << nodeConnect->name();
 
   return out;
 }

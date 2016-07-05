@@ -25,8 +25,8 @@ ostream& operator<<( ostream &out , MosNode &node )
   
   out << left;
   
-  for( unsigned int i = 0 ; i < node.connect().size() ; i++ )
-     out << setw( TAB ) << node.connect()[i]->name();
+  for( Node* nodeConnect : node.connect() )
+     out << setw( TAB ) << nodeConnect->name();
 
   return out;
 }
