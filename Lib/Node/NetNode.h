@@ -4,6 +4,7 @@
 #include <ostream>
 
 #include "Node.h"
+#include "../Component/Layer.h"
 
 class NetNode : public Node
 {
@@ -11,11 +12,11 @@ class NetNode : public Node
 
     inline NetNode();
 
-    inline vector<Rectangle>& nets();
+    inline vector<Layer>& nets();
 
   private:
 
-    vector<Rectangle> m_nets;
+    vector<Layer> m_nets;
 };
 
 ostream& operator<<( ostream &out , NetNode &node );
@@ -23,7 +24,7 @@ ostream& operator<<( ostream &out , NetNode &node );
 // NetNode inline member function
 inline NetNode::NetNode() : Node( NET ) {}
 
-inline vector<Rectangle>& NetNode::nets() { return m_nets; }
+inline vector<Layer>& NetNode::nets() { return m_nets; }
 // end NetNode inline member function
 
 #endif

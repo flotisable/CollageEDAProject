@@ -6,6 +6,12 @@
 
 #include "../TechFile/TechFile.h"
 
+Mos::Mos() : m_type( UNKNOWN ) , tech( nullptr )
+{
+  diff.setLayer( "DIFF"   );
+  g   .setLayer( "POLY1"  );
+}
+
 Mos::Mos( int type , double w , double l , unsigned int m ,
           TechFile *techFile )
 {
@@ -14,6 +20,8 @@ Mos::Mos( int type , double w , double l , unsigned int m ,
   m_l     = l;
   m_m     = m;
   tech    = techFile;
+  diff.setLayer( "DIFF"   );
+  g   .setLayer( "POLY1"  );
 }
 
 void Mos::generate()
@@ -56,11 +64,12 @@ void Mos::generate()
   s.clear();
   d.clear();
 
-  Rectangle model;
+  Layer model;
 
-  model.setCenter( metalX , metalY );
-  model.setHeight( metalH );
-  model.setWidth ( metalW );
+  model.setLayer  ( "METAL1" );
+  model.setCenter ( metalX , metalY );
+  model.setHeight ( metalH );
+  model.setWidth  ( metalW );
   
   s.push_back( model );
   
@@ -72,8 +81,9 @@ void Mos::generate()
   // set contact
   double  contactY = ( diff.height() - conWidth ) / 2 - conInDiff;
 
-  model.setHeight( conWidth );
-  model.setWidth ( conWidth );
+  model.setLayer  ( "CONT" );
+  model.setHeight ( conWidth );
+  model.setWidth  ( conWidth );
 
   for( register int i = 0 ; i < conNum ; i++ )
   {
@@ -97,6 +107,7 @@ void Mos::generate()
   double DiffInImp = tech->rule( SpacingRule::MIN_ENCLOSURE , impLayer ,
                                                               "DIFF" );
 
+  imp.setLayer  ( impLayer );
   imp.setCenter ( 0 , 0 );
   imp.setHeight ( diff.height () + 2 * 0.35/*DiffInImp*/ );
   imp.setWidth  ( diff.width  () + 2 * DiffInImp );
@@ -177,35 +188,27 @@ bool Mos::read( const char *fileName )
 
 
 void Mos::writeLayer( ostream &output , const char *name ,
-                      const Rectangle &layer )
+                      const Layer &layer )
 {
   output << setw( 14 ) << name;
-  output << layer;
+  output << static_cast<Rectangle>( layer );
   output << endl;
 }
 
 
 ostream& operator<<( ostream &out , Mos &mos )
 {
-  out << "DIFF   " << mos.diffusion()          << endl;
-  out << "METAL1 " << mos.source()[Mos::METAL] << endl;
+  out << mos.diffusion()          << endl;
+  out << mos.source()[Mos::METAL] << endl;
 
   for( unsigned int i = Mos::CONTACT ; i < mos.source().size() ; i++ )
-     out << "CONT   " << mos.source()[i] << endl;
+     out << mos.source()[i] << endl;
 
-  out << "POLY1  " << mos.gate()              << endl;
-  out << "METAL1 " << mos.drain()[Mos::METAL] << endl;
+  out << mos.gate()              << endl;
+  out << mos.drain()[Mos::METAL] << endl;
 
   for( unsigned int i = Mos::CONTACT ; i < mos.drain().size() ; i++ )
-     out << "CONT   " << mos.drain()[i] << endl;
+     out << mos.drain()[i] << endl;
 
-  string impLayer;
-  switch( mos.type() )
-  {
-    case Mos::NMOS: impLayer = "NIMP";  break;
-    case Mos::PMOS: impLayer = "PIMP";  break;
-    default:                            break;
-  }
-
-  return out << impLayer << "   " << mos.implant() << endl;
+  return out << mos.implant() << endl;
 }

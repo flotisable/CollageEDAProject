@@ -6,7 +6,7 @@
 using namespace std;
 
 #include "../Graphic/Point.h"
-#include "../Graphic/Rectangle.h"
+#include "Layer.h"
 
 class TechFile;
 
@@ -47,10 +47,10 @@ class ViaDevice
     
     void generate();
     
-    inline const vector<vector<Rectangle>>& contact   () const;
-    inline const Rectangle&                 metal     () const;
-    inline const Rectangle&                 diffusion () const;
-    inline const Rectangle&                 implant   () const;
+    inline const vector<vector<Layer>>& contact   () const;
+    inline const Layer&                 metal     () const;
+    inline const Layer&                 diffusion () const;
+    inline const Layer&                 implant   () const;
   
   private:
   
@@ -62,10 +62,10 @@ class ViaDevice
     unsigned int  m_row;
     unsigned int  m_col;
     
-    vector<vector<Rectangle>> contacts;
-    Rectangle                 m;
-    Rectangle                 diff;
-    Rectangle                 imp;
+    vector<vector<Layer>> contacts;
+    Layer                 m;
+    Layer                 diff;
+    Layer                 imp;
 };
 
 inline ViaDevice::ViaDevice(  const string &viaLayer , const Point &center ,
@@ -90,13 +90,13 @@ inline void ViaDevice::setCenter  ( double x , double y     )
 inline void ViaDevice::setTechFile( TechFile *techFile )
 { tech = techFile; }
 
-inline const vector<vector<Rectangle>>& ViaDevice::contact  () const
+inline const vector<vector<Layer>>& ViaDevice::contact  () const
 { return contacts; }
-inline const Rectangle&                 ViaDevice::metal    () const
+inline const Layer&                 ViaDevice::metal    () const
 { return m;        }
-inline const Rectangle&                 ViaDevice::diffusion() const
+inline const Layer&                 ViaDevice::diffusion() const
 { return diff;     }
-inline const Rectangle&                 ViaDevice::implant  () const
+inline const Layer&                 ViaDevice::implant  () const
 { return imp;      }
 
 #endif

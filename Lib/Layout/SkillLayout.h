@@ -7,6 +7,7 @@ using namespace std;
 
 #include "../Graphic/Point.h"
 #include "../Graphic/Rectangle.h"
+#include "../Component/Layer.h"
 
 class Mos;
 class ViaDevice;
@@ -28,6 +29,8 @@ class SkillLayout
                                                 const Point &rt );
     bool drawRect( const string &layer ,  double lbX , double lbY ,
                                           double rtX , double rtY );
+
+    inline bool drawLayer( const Layer &layer );
 
     inline bool drawInst( const string &lib , const string &cell ,
                           const string &view ,
@@ -76,6 +79,10 @@ inline bool SkillLayout::drawRect(  const string &layer ,
 inline bool SkillLayout::drawRect( const string &layer ,  const Point &lb ,
                                                           const Point &rt )
 { return drawRect( layer , lb.x() , lb.y() , rt.x() , rt.y() ); }
+
+inline bool SkillLayout::drawLayer( const Layer &layer )
+{ return drawRect( layer.layer() ,  layer.left  () , layer.bottom () ,
+                                    layer.right () , layer.top    () ); }
 
 inline bool SkillLayout::drawInst(  const string  &lib   ,
                                     const string  &cell  ,

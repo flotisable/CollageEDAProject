@@ -12,6 +12,7 @@ ViaDevice::ViaDevice( const string &viaLayer ,
   setRow    ( row );
   setColumn ( col );
   tech      = techFile;
+  diff.setLayer( "DIFF" );
 }
 
 void ViaDevice::setRow( unsigned int row )
@@ -45,8 +46,9 @@ void ViaDevice::generate()
   double    unitCont = conWidth + conSpace;
   double    conX     = -( ( m_col - 1 ) * ( unitCont ) ) / 2;
   double    conY     =  ( ( m_row - 1 ) * ( unitCont ) ) / 2;
-  Rectangle model;
+  Layer model;
   
+  model.setLayer ( via      );
   model.setWidth ( conWidth );
   model.setHeight( conWidth );
 
@@ -69,6 +71,7 @@ void ViaDevice::generate()
   double metalH     = m_row * unitCont - conSpace + 2 * conInMetal;
   double metalW     = m_col * unitCont - conSpace + 2 * conInMetal;
   
+  m.setLayer  ( "METAL1" );
   m.setCenter ( 0 , 0 );
   m.setHeight ( metalH );
   m.setWidth  ( metalW );
@@ -96,6 +99,7 @@ void ViaDevice::generate()
   double  diffInImp = tech->rule( SpacingRule::MIN_ENCLOSURE ,  impLayer ,
                                                                 "DIFF" );
   
+  imp.setLayer  ( impLayer );
   imp.setCenter ( 0 , 0 );
   imp.setHeight ( diff.height () + 2 * diffInImp );
   imp.setWidth  ( diff.width  () + 2 * diffInImp );

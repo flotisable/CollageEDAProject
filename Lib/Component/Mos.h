@@ -5,7 +5,7 @@
 #include <vector>
 using namespace std;
 
-#include "../Graphic/Rectangle.h"
+#include "Layer.h"
 
 class TechFile;
 
@@ -26,7 +26,7 @@ class Mos
       PMOS
     };
 
-    inline Mos();
+    Mos();
     Mos(  int type , double w , double l , unsigned int m ,
           TechFile *techFile = nullptr );
 
@@ -46,11 +46,11 @@ class Mos
     bool write    ( const char *fileName = "mosInfo.txt"  );
     bool read     ( const char *fileName = "mosInput.txt" );
     
-    inline const Rectangle&         diffusion () const;
-    inline const vector<Rectangle>& source    () const;
-    inline const Rectangle&         gate      () const;
-    inline const vector<Rectangle>& drain     () const;
-    inline const Rectangle&         implant   () const;
+    inline const Layer&         diffusion () const;
+    inline const vector<Layer>& source    () const;
+    inline const Layer&         gate      () const;
+    inline const vector<Layer>& drain     () const;
+    inline const Layer&         implant   () const;
 
     inline bool operator==( const Mos &mos );
 
@@ -61,16 +61,16 @@ class Mos
     double        m_l;
     unsigned int  m_m;
     
-    Rectangle         diff;
-    vector<Rectangle> s;
-    Rectangle         g;
-    vector<Rectangle> d;
-    Rectangle         imp;
+    Layer         diff;
+    vector<Layer> s;
+    Layer         g;
+    vector<Layer> d;
+    Layer         imp;
     
     TechFile *tech;
     
     void writeLayer(  ostream &output , const char *name ,
-                      const Rectangle &layer );
+                      const Layer &layer );
 };
 
 // Mos non-memeber function
@@ -78,8 +78,6 @@ ostream& operator<<( ostream &out , Mos &mos );
 // end Mos non-memeber function
 
 // Mos inline member function
-inline Mos::Mos() : m_type( UNKNOWN ) , tech( nullptr ) {}
-
 inline int          Mos::type() const { return m_type; }
 inline double       Mos::w   () const { return m_w;    }
 inline double       Mos::l   () const { return m_l;    }
@@ -92,11 +90,11 @@ inline void Mos::setM   ( unsigned int  m ) { m_m     = m; }
 
 inline void Mos::setTechFile( TechFile *techFile ) { tech = techFile; }
 
-inline const Rectangle&         Mos::diffusion() const { return diff; }
-inline const vector<Rectangle>& Mos::source   () const { return s   ; }
-inline const Rectangle&         Mos::gate     () const { return g   ; }
-inline const vector<Rectangle>& Mos::drain    () const { return d   ; }
-inline const Rectangle&         Mos::implant  () const { return imp ; }
+inline const Layer&         Mos::diffusion() const { return diff; }
+inline const vector<Layer>& Mos::source   () const { return s   ; }
+inline const Layer&         Mos::gate     () const { return g   ; }
+inline const vector<Layer>& Mos::drain    () const { return d   ; }
+inline const Layer&         Mos::implant  () const { return imp ; }
 
 inline bool Mos::operator==( const Mos &mos )
 {

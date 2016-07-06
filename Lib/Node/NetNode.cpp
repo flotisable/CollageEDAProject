@@ -14,7 +14,7 @@ ostream& operator<<( ostream &out , NetNode &node )
      out << setw( TAB ) << nodeConnect->name();
 
   for( auto &net : node.nets() )
-     out << net << " ";
+     out << static_cast<Rectangle>( net ) << " ";
 
   return out;
 }

@@ -43,27 +43,16 @@ bool SkillLayout::drawMos( Mos *mos )
 {
   bool  success = true;
 
-  success &= drawRect( "DIFF"   , mos->diffusion()             + center );
-  success &= drawRect( "POLY1"  , mos->gate     ()             + center );
-  success &= drawRect( "METAL1" , mos->source   ()[Mos::METAL] + center );
-  success &= drawRect( "METAL1" , mos->drain    ()[Mos::METAL] + center );
+  success &= drawLayer( mos->diffusion()             + center );
+  success &= drawLayer( mos->gate     ()             + center );
   
-  for( unsigned int i = Mos::CONTACT ; i < mos->source().size() ; i++ )
+  for( unsigned int i = 0 ; i < mos->source().size() ; i++ )
   {
-     success &= drawRect( "CONT" , mos->source()[i] + center );
-     success &= drawRect( "CONT" , mos->drain ()[i] + center );
+     success &= drawLayer( mos->source()[i] + center );
+     success &= drawLayer( mos->drain ()[i] + center );
   }
   
-  string impLayer;
-  
-  switch( mos->type() )
-  {
-    case Mos::NMOS: impLayer = "NIMP";  break;
-    case Mos::PMOS: impLayer = "PIMP";  break;
-    default:                            break;
-  }
-  
-  success &= drawRect( impLayer , mos->implant() + center );
+  success &= drawLayer( mos->implant() + center );
   
   return success;
 }
@@ -72,24 +61,14 @@ bool SkillLayout::drawViaDevice( ViaDevice *viaDevice )
 {
   bool success = true;
   
-  success &= drawRect( "DIFF"   , viaDevice->diffusion() + center );
-  success &= drawRect( "METAL1" , viaDevice->metal    () + center );
-  
+  success &= drawLayer( viaDevice->diffusion() + center );
+  success &= drawLayer( viaDevice->metal    () + center );
+
   for( int i = 0 ; i < viaDevice->row() ; i++ )
      for( int j = 0 ; j < viaDevice->column() ; j++ )
-        success &= drawRect(  viaDevice->viaLayer() ,
-                              viaDevice->contact()[i][j] + center );
+        success &= drawLayer( viaDevice->contact()[i][j] + center );
 
-  string impLayer;
-
-  switch( viaDevice->type() )
-  {
-    case ViaDevice::N: impLayer = "NIMP"; break;
-    case ViaDevice::P: impLayer = "PIMP"; break;
-    default:                              break;
-  }
-
-  success &= drawRect( impLayer , viaDevice->implant() + center );
+  success &= drawLayer( viaDevice->implant() + center );
 
   return success;
 }
@@ -126,11 +105,11 @@ bool SkillLayout::drawSubckt( ICModel *subckt )
 
   for( unsigned int i = 0 ; i < ios.size() ; i++ )
   {
-     vector<Rectangle>  &netlist    = static_cast<NetNode*>( ios[i] )->nets();
-     string             layer;
+     vector<Layer>  &netlist    = static_cast<NetNode*>( ios[i] )->nets();
+     //string         layer;
 
      for( unsigned int j = 0 ; j < netlist.size() ; j++ )
-     {
+     /*{
         if      ( netlist[j].height() > netlist[j].width() )
           layer = "METAL1";
         else if ( netlist[j].height() == netlist[j].width() )
@@ -140,19 +119,19 @@ bool SkillLayout::drawSubckt( ICModel *subckt )
           else                                    layer = "METAL1";
         }
         else
-          layer = "METAL2";
+          layer = "METAL2";*/
 
-        success &= drawRect( layer , netlist[j] + center );
-     }
+        success &= drawLayer( netlist[j] + center );
+     //}
   }
 
   for( unsigned int i = 0 ; i < nets.size() ; i++ )
   {
-     vector<Rectangle>  &netlist = static_cast<NetNode*>( nets[i] )->nets();
-     string             layer;
+     vector<Layer>  &netlist = static_cast<NetNode*>( nets[i] )->nets();
+     //string         layer;
      
      for( unsigned int j = 0 ; j < netlist.size() ; j++ )
-     {
+     /*{
         if      ( netlist[j].height() > netlist[j].width() )
           layer = "METAL1";
         else if ( netlist[j].height() == netlist[j].width() )
@@ -162,10 +141,10 @@ bool SkillLayout::drawSubckt( ICModel *subckt )
           else                                    layer = "METAL1";
         }
         else
-          layer = "METAL2";
+          layer = "METAL2";*/
         
-        success &= drawRect( layer , netlist[j] + center );
-     }
+        success &= drawLayer( netlist[j] + center );
+     //}
   }
 
   return success;
