@@ -25,11 +25,11 @@ int main()
 
   for( int i = 1 ; i <= TIMES ; i++ )
   {
-     TechFile    techFile;
-     SubcktModel *model;
-     Hspice      hspice( &techFile );
-     SkillLayout skill;
-     double      start = clock();
+     TechFile     techFile;
+     SubcktModel  *model;
+     Hspice       hspice( &techFile );
+     SkillLayout  skill;
+     double       start = clock();
 
      hspice.setID( Hspice::VDD   , "VDD"   );
      hspice.setID( Hspice::GND   , "VSS"   );
