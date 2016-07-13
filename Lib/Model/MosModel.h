@@ -4,27 +4,15 @@
 #include "Model.h"
 #include "../Component/Mos.h"
 
-class MosModel : public Model
+class MosModel : public Model , public Mos
 {
   public:
   
-    inline MosModel( Mos *model = nullptr );
-
-    inline Mos* model();
-
-    inline void setModel( Mos *model );
-
-  private:
-
-    Mos *m_model;
+    inline MosModel();
 };
 
 // MosModel inline member function
-inline MosModel::MosModel( Mos *model ) : Model( MOS ) , m_model( model ) {}
-
-inline Mos* MosModel::model() { return m_model; }
-
-inline void MosModel::setModel( Mos *model ) { m_model = model; }
+inline MosModel::MosModel() : Model( MOS ) {}
 // end MosModel inline member function
 
 #endif

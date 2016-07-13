@@ -15,7 +15,7 @@ ostream& operator<<( ostream &out , MosNode &node )
   out << node.type()    << "  ";
   out << node.center()  << "  ";
   
-  Mos *mos = node.model()->model();
+  Mos *mos = node.model();
   out << right;
   out << mos->type()    << "  ";
   out << setw( F_TAB )  << mos->w();

@@ -49,7 +49,7 @@ bool Layout::drawSubckt( ICModel *subckt )
      MosNode  *node = static_cast<MosNode*>( mosNode );
 
      center   += node->center();
-     success  &= drawMos( static_cast<MosModel*>( node->model() )->model() );
+     success  &= drawMos( static_cast<MosModel*>( node->model() ) );
      center   -= node->center();
   }
 

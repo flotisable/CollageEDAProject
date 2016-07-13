@@ -177,32 +177,30 @@ void Hspice::setupMos( ICModel *model )
   // end set net
 
   // set mos
-  Mos *mos = new Mos;
+  MosModel *mosModel = new MosModel;
 
   wordIndex++;
-  if      (	word[TYPE] == id[PMOS] ) mos->setType( Mos::PMOS );
-  else if (	word[TYPE] == id[NMOS] ) mos->setType( Mos::NMOS );
-
-  wordIndex++;
-  if( wordIndex < word.size() )
-    mos->setW( stod( word[W].substr( 2 , word[W].size() - 3 ) ) );
-  else
-    mos->setW( 0 );
+  if      (	word[TYPE] == id[PMOS] ) mosModel->Mos::setType( Mos::PMOS );
+  else if (	word[TYPE] == id[NMOS] ) mosModel->Mos::setType( Mos::NMOS );
 
   wordIndex++;
   if( wordIndex < word.size() )
-    mos->setL( stod( word[L].substr( 2 , word[L].size() - 3 ) ) );
+    mosModel->setW( stod( word[W].substr( 2 , word[W].size() - 3 ) ) );
   else
-    mos->setL( 0 );
+    mosModel->setW( 0 );
 
   wordIndex++;
   if( wordIndex < word.size() )
-    mos->setM( stod( word[M].substr( 2 , word[M].size() - 3 ) ) );
+    mosModel->setL( stod( word[L].substr( 2 , word[L].size() - 3 ) ) );
   else
-    mos->setM( 1 );
+    mosModel->setL( 0 );
+
+  wordIndex++;
+  if( wordIndex < word.size() )
+    mosModel->setM( stod( word[M].substr( 2 , word[M].size() - 3 ) ) );
+  else
+    mosModel->setM( 1 );
   // end set mos
-
-  MosModel *mosModel = new MosModel( mos );
 
   int index = model->searchModel( Model::MOS , mosModel );
 
@@ -212,10 +210,7 @@ void Hspice::setupMos( ICModel *model )
     index = model->mosModel().size() - 1;
   }
   else
-  {
-    delete mos;
     delete mosModel;
-  }
 
   node->setModel( static_cast<MosModel*>( model->mosModel()[index] ) );
 }

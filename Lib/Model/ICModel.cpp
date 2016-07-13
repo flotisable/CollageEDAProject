@@ -20,12 +20,10 @@ ICModel::~ICModel()
      for( Model *model : modelVector )
         if( model )
         {
-          switch( model->type() )
+          switch( model->Model::type() )
           {
             case Model::MOS:
             {
-              MosModel *modelT = static_cast<MosModel*>( model );
-              if( modelT->model() ) delete modelT->model();
               break;
             }
             case Model::SUBCKT:
@@ -85,7 +83,7 @@ bool ICModel::generate()
 
   for( Model *model : models[Model::MOS] )
   {
-     Mos *mos = static_cast<MosModel*>( model )->model();
+     Mos *mos = static_cast<MosModel*>( model );
 
      mos->setTechFile( tech );
      mos->generate();
@@ -107,7 +105,7 @@ int ICModel::searchMos( MosModel *model )
   for( register unsigned int i = 0 ; i < models[Model::MOS].size() ; i++ )
   {
      MosModel *mosModel = static_cast<MosModel*>( models[Model::MOS][i] );
-     if( *mosModel->model() == *model->model() ) return i;
+     if( *mosModel == *model ) return i;
   }
   return -1;
 }

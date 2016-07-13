@@ -57,7 +57,7 @@ bool ICRouting::channelRouting( SubcktModel *model )
      mosNodes[i]->setCost( i ); // use number as cost
 
      if(  nmosBias == -1 &&
-          static_cast<MosNode*>( mosNodes[i] )->model()->model()->type()
+          static_cast<MosNode*>( mosNodes[i] )->model()->Mos::type()
           == Mos::NMOS )
      {
        nmosBias = i;
@@ -508,9 +508,8 @@ bool ICRouting::channelRouting( SubcktModel *model )
   double  pimpSpace     = tech->rule( SpacingRule::MIN_SPACING  , "PIMP"    );
   double  conWidth      = tech->rule( SpacingRule::MIN_WIDTH    , "CONT"    );
   
-  Mos     *pmos         = static_cast<MosNode*>( mosNodes[0] )->model()
-                          ->model();
-  Mos     *nmos         = static_cast<MosNode*>( mosNodes[nmosBias] )->model()
+  Mos     *pmos         = static_cast<MosNode*>( mosNodes[0] )->model();
+  Mos     *nmos         = static_cast<MosNode*>( mosNodes[nmosBias] )
                           ->model();
   
   double  xBias         = ( ( pmosFirst > nmosFirst ) ? mosNodes[nmosBias]

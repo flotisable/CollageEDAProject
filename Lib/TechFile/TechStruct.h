@@ -15,12 +15,6 @@ struct TechParam
 
 // end controls
 
-// layer definitions
-// end layer definitions
-
-// layer rules
-// end layer rules
-
 // physical rules
 
 struct SpacingRule
@@ -54,24 +48,6 @@ inline const string SpacingRule::map( Type type  )
 { return ( type == UNKNOWN ) ? "unknown" : TYPES[type]; }
 
 // end physical rules
-
-// electrical rules
-// end electrical rules
-
-// devices
-// end devices
-
-// compactor rules
-// end compactor rules
-
-// lx rules
-// end lx rules
-
-// las rules
-// end las rules
-
-// pr rules
-// end pr rules
 
 ostream& operator<<( ostream &out , TechParam   &parameter );
 ostream& operator<<( ostream &out , SpacingRule &rule );

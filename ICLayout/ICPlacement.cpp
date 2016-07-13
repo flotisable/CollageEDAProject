@@ -50,7 +50,7 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
   for( Node *mosNode : mosNodes )
   {
      int cost = 0;
-     Mos *mos = static_cast<MosNode*>( mosNode )->model()->model();
+     Mos *mos = static_cast<MosNode*>( mosNode )->model();
 
      if( mos->type() == Mos::PMOS )
      {
@@ -200,10 +200,8 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
   double  pimpSpace   = tech->rule( SpacingRule::MIN_SPACING ,  "PIMP"   );
   double  conAndDiff  = tech->rule( SpacingRule::MIN_SPACING ,  "CONT" ,
                                                                 "DIFF" );
-  Mos     *pmos       = static_cast<MosNode*>( mosNodes[0]        )->model()
-                        ->model();
-  Mos     *nmos       = static_cast<MosNode*>( mosNodes[pmosNum]  )->model()
-                        ->model();
+  Mos     *pmos       = static_cast<MosNode*>( mosNodes[0]        )->model();
+  Mos     *nmos       = static_cast<MosNode*>( mosNodes[pmosNum]  )->model();
   double  mosWidth    = max(  pmos->implant().width() + pimpSpace ,
                               nmos->implant().width() + nimpSpace );
   double  channel     = ( model->model()->ioNum() - 2 +
