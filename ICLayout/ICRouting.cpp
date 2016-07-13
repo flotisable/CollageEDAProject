@@ -19,17 +19,15 @@ using namespace std;
 
 bool ICRouting::routing()
 {
-  vector<Model*>  &subcktModels = m_model->model()->subcktModel();
+  vector<Model*>  &subcktModels = m_model->subcktModel();
   bool            success     = true;
 
   for( int i = subcktModels.size() - 1 ; i >= 0 ; i-- )
   {
      SubcktModel* model = static_cast<SubcktModel*>( subcktModels[i] );
 
-     if( model->model()->subcktCell().size() )
-       success &= gridRouting   ( model );
-     else
-       success &= channelRouting( model );
+     if( model->subcktCell().size() ) success &= gridRouting    ( model );
+     else                             success &= channelRouting ( model );
   }
 
   return success &= gridRouting( m_model );
@@ -37,7 +35,7 @@ bool ICRouting::routing()
 
 bool ICRouting::channelRouting( SubcktModel *model )
 {
-  vector<Node*> &mosNodes = model->model()->mosCell();
+  vector<Node*> &mosNodes = model->mosCell();
 
   // set number ³]©w½s¸¹
   sort( mosNodes.begin() , mosNodes.end() ,
@@ -89,7 +87,7 @@ bool ICRouting::channelRouting( SubcktModel *model )
   vector<NetNode*>  nets;
 
   // set cost
-  for( Node *node : model->model()->io() )
+  for( Node *node : model->io() )
      if( node->type() != Node::VDD && node->type() != Node::VSS )
      {
        node->setCost( node->connect().size() );
@@ -98,7 +96,7 @@ bool ICRouting::channelRouting( SubcktModel *model )
      else
        node->setCost( -1 );
 
-  for( Node *node : model->model()->net() )
+  for( Node *node : model->net() )
   {
      node->setCost( node->connect().size() );
      nets.push_back( static_cast<NetNode*>( node ) );
@@ -202,7 +200,7 @@ bool ICRouting::channelRouting( SubcktModel *model )
   // end set VCG
 
   // rough routing
-  vector<Rectangle>         intervals;
+  vector<Rectangle>     intervals;
   vector<vector<Layer>> netInfo;
   
   netInfo.resize( nets.size() );

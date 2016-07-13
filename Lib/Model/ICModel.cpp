@@ -18,24 +18,7 @@ ICModel::~ICModel()
 
 	for( vector<Model*> &modelVector : models )
      for( Model *model : modelVector )
-        if( model )
-        {
-          switch( model->Model::type() )
-          {
-            case Model::MOS:
-            {
-              break;
-            }
-            case Model::SUBCKT:
-            {
-              SubcktModel *modelT = static_cast<SubcktModel*>( model );
-              if( modelT->model() ) delete modelT->model();
-              break;
-            }
-            default: break;
-          }
-          delete model;
-        }
+        if( model ) delete model;
 }
 
 int ICModel::cellNum() const
@@ -91,7 +74,7 @@ bool ICModel::generate()
 
   for( Model *model : models[Model::SUBCKT] )
   {
-     ICModel *icModel = static_cast<SubcktModel*>( model )->model();
+     ICModel *icModel = static_cast<SubcktModel*>( model );
 
      icModel->setTechFile( tech );
      icModel->generate();

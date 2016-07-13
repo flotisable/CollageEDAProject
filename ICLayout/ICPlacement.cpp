@@ -17,17 +17,15 @@ using namespace std;
 
 bool ICPlacement::placement()
 {
-  vector<Model*>  &subcktModels = m_model->model()->subcktModel();
+  vector<Model*>  &subcktModels = m_model->subcktModel();
   bool            success = true;
 
   for( int i = subcktModels.size() - 1 ; i >= 0  ; i-- )
   {
      SubcktModel *model = static_cast<SubcktModel*>( subcktModels[i] );
 
-     if( model->model()->subcktCell().size() )
-       success &= subcktPlacement ( model );
-     else
-       success &= mosPlacement    ( model );
+     if( model->subcktCell().size() ) success &= subcktPlacement( model );
+     else                             success &= mosPlacement   ( model );
 
      if( !success ) return false;
   }
@@ -44,7 +42,7 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
   };
 
   // calculate cost
-  vector<Node*> &mosNodes = model->model()->mosCell();
+  vector<Node*> &mosNodes = model->mosCell();
   int           pmosNum   = 0;
 
   for( Node *mosNode : mosNodes )
@@ -204,8 +202,7 @@ bool ICPlacement::mosPlacement( SubcktModel *model )
   Mos     *nmos       = static_cast<MosNode*>( mosNodes[pmosNum]  )->model();
   double  mosWidth    = max(  pmos->implant().width() + pimpSpace ,
                               nmos->implant().width() + nimpSpace );
-  double  channel     = ( model->model()->ioNum() - 2 +
-                          model->model()->netNum() + 1 ) *
+  double  channel     = ( model->ioNum() - 2 + model->netNum() + 1 ) *
                         ( metal2Width + metal2Space ) - metal2Space;
   double  p2n         = channel + 2 * conAndDiff +
                         ( pmos->diffusion().height() +
@@ -250,7 +247,7 @@ bool ICPlacement::subcktPlacement( SubcktModel *model )
     MAX_DIRECT
   };
 
-  vector<Node*> &subcktNodes  = model->model()->subcktCell();
+  vector<Node*> &subcktNodes = model->subcktCell();
 
   // caculate cost
   for( Node *node : subcktNodes )

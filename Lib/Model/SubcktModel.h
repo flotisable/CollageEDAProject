@@ -5,36 +5,29 @@
 using namespace std;
 
 #include "Model.h"
+#include "ICModel.h"
 
-class ICModel;
-
-class SubcktModel : public Model
+class SubcktModel : public Model , public ICModel
 {
   public:
 
-    inline SubcktModel( ICModel *model = nullptr );
+    inline SubcktModel();
 
-    inline const string&  name  () const;
-    inline ICModel*       model () const;
+    inline const string& name() const;
 
-    inline void setName ( const string  &name   );
-    inline void setModel( ICModel       *model  );
+    inline void setName( const string &name );
 
   private:
 
     string  m_name;
-    ICModel *m_model;
 };
 
 // SubcktModel inline member function
-inline SubcktModel::SubcktModel( ICModel *model )
-: Model( SUBCKT ) , m_model( model ) {}
+inline SubcktModel::SubcktModel() : Model( SUBCKT ) {}
 
-inline const string&  SubcktModel::name  () const { return m_name;   }
-inline ICModel*       SubcktModel::model () const { return m_model;  }
+inline const string& SubcktModel::name() const { return m_name;   }
 
-inline void SubcktModel::setName  ( const string &name  ) { m_name  = name;   }
-inline void SubcktModel::setModel ( ICModel      *model ) { m_model = model;  }
+inline void SubcktModel::setName( const string &name ) { m_name = name; }
 // SubcktModel inline member function
 
 #endif

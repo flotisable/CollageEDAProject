@@ -16,8 +16,8 @@ bool Layout::drawMos( Mos *mos )
   success &= drawLayer( mos->diffusion() + center );
   success &= drawLayer( mos->gate     () + center );
 
-  for( auto &layer : mos->source() )  success &= drawLayer( layer + center );
-  for( auto &layer : mos->drain () )  success &= drawLayer( layer + center );
+  for( auto &layer : mos->source() ) success &= drawLayer( layer + center );
+  for( auto &layer : mos->drain () ) success &= drawLayer( layer + center );
 
   success &= drawLayer( mos->implant() + center );
 
@@ -56,13 +56,12 @@ bool Layout::drawSubckt( ICModel *subckt )
   for( Node *subcktNode : subckt->subcktCell() )
   {
      SubcktNode   *node   = static_cast<SubcktNode*>  ( subcktNode    );
-     SubcktModel  *model  = static_cast<SubcktModel*> ( node->model() );
 
      success  &= drawRect(  "NWELL" ,
                             static_cast<Rectangle>( *node ) + center );
 
      center   += node->center ();
-     success  &= drawSubckt   ( model->model() );
+     success  &= drawSubckt   ( static_cast<SubcktModel*>( node->model() ) );
      center   -= node->center ();
   }
 
