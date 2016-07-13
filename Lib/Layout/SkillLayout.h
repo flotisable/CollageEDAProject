@@ -12,7 +12,7 @@ class SkillLayout : public Layout
 {
   public:
   
-    inline SkillLayout( const char *fileName = "skillLayout.il" );
+    inline  SkillLayout ( const char *fileName = "skillLayout.il" );
 
     inline bool drawRect( const string &layer , const Rectangle &rect );
     inline bool drawRect( const string &layer , const Point &lb ,

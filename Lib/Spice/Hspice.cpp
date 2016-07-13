@@ -26,8 +26,8 @@ Hspice::Hspice( TechFile *techFile ) : tech( techFile )
 
 Hspice::~Hspice()
 {
-  for( register unsigned int i = 0 ; i < models.size() ; i++ )
-     if( models[i] ) delete models[i];
+  for( SubcktModel *model : models )
+     if( model ) delete model;
 }
 
 bool Hspice::read( const char *fileName )
@@ -77,8 +77,7 @@ bool Hspice::write( const char *fileName )
 	
 	if( file.is_open() )
 	{
-    for( unsigned int i = 0 ; i < models.size() ; i++ )
-       writeSubcktModel( models[i] );
+    for( SubcktModel *model : models )  writeSubcktModel( model );
 		file.close();
 		return true;
 	}
@@ -90,32 +89,31 @@ void Hspice::mergeModel()
   int                 mainCircuitNum = 0;
   queue<SubcktModel*> pipe;
 
-  for( register unsigned int i = 0 ; i < models.size() ; i++ )
-     if( models[i]->model()->isMainCircuit() )
+  for( SubcktModel *model : models )
+     if( model->model()->isMainCircuit() )
      {
-       models[mainCircuitNum] = models[i];
+       models[mainCircuitNum] = model;
        mainCircuitNum++;
      }
   models.resize( mainCircuitNum );
 
-  for( unsigned int i = 0 ; i < models.size() ; i++ )
+  for( SubcktModel *model : models )
   {
-     ICModel        *model        = models[i]->model();
-     vector<Model*> &subcktModels = model->subcktModel();
+     vector<Model*> &subcktModels = model->model()->subcktModel();
 
-     pipe.push( models[i] );
+     pipe.push( model );
 
      while( pipe.size() )
      {
        ICModel  *temp       = pipe.front()->model();
-       int      parentIndex = model->searchModel( Model::SUBCKT ,
-                                                  pipe.front() );
+       int      parentIndex = model->model()->searchModel(  Model::SUBCKT ,
+                                                            pipe.front() );
 
-       for( unsigned int i = 0 ; i < temp->subcktCell().size() ; i++ )
+       for( Node *node : temp->subcktCell() )
        {
-          SubcktModel *subckt = static_cast<SubcktNode*>
-                                ( temp->subcktCell()[i] )->model();
-          int         index   = model->searchModel( Model::SUBCKT , subckt );
+          SubcktModel *subckt = static_cast<SubcktNode*>( node )->model();
+          int         index   = model->model()->searchModel(  Model::SUBCKT ,
+                                                              subckt );
 
           if( index == -1 )
           {

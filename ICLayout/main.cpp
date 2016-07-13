@@ -9,7 +9,7 @@ using namespace std;
 #include "../Lib/Spice/Hspice.h"
 #include "../Lib/Model/ICModel.h"
 #include "../Lib/Model/SubcktModel.h"
-#include "../Lib/TechFile/TechFile.h"
+#include "../Lib/TechFile/CadenceTechFile.h"
 #include "../Lib/Layout/SkillLayout.h"
 #include "ICPlacement.h"
 #include "ICRouting.h"
@@ -25,10 +25,10 @@ int main()
 
   for( int i = 1 ; i <= TIMES ; i++ )
   {
-     TechFile     techFile;
+     TechFile     *techFile = new CadenceTechFile;
      SubcktModel  *model;
-     Hspice       hspice( &techFile );
-     SkillLayout  skill;
+     Hspice       hspice( techFile );
+     Layout       *layout   = new SkillLayout;
      double       start = clock();
 
      hspice.setID( Hspice::VDD   , "VDD"   );
@@ -40,21 +40,23 @@ int main()
      {
        cout << "Read\n";
 
-       if( techFile.read( "../test.txt" ) ) cout << "Read Tech File\n";
-       else                                 cout << "Tech File Error\n";
+       if( techFile->read( "../test.txt" ) )  cout << "Read Tech File\n";
+       else                                   cout << "Tech File Error\n";
+       
+       techFile->write();
 
        model = hspice.model();
        model->model()->generate();
     
-       ICPlacement  placer( model , &techFile );
-       ICRouting    router( model , &techFile );
+       ICPlacement  placer( model , techFile );
+       ICRouting    router( model , techFile );
 
        placer.placement ();
        router.routing   ();
 
-       skill.setCenter( 0 , 0 );
-       skill.drawSubckt( model->model() );
-       skill.drawRect( "NWELL" , static_cast<Rectangle>( *model ) );
+       layout->setCenter( 0 , 0 );
+       layout->drawSubckt( model->model() );
+       layout->drawRect( "NWELL" , static_cast<Rectangle>( *model ) );
 
        if( hspice.write() ) cout << "Write\n";
        else                 cout << "Write Error\n";
@@ -69,6 +71,9 @@ int main()
      totalTime += runTime;
 
      //cout << runTime << endl;
+     
+     delete layout;
+     delete techFile;
   }
   
   runTime << "´ú" << TIMES << "¦¸¡G" << totalTime / TIMES << "¬í" << endl;

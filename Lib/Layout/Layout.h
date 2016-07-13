@@ -17,7 +17,8 @@ class Layout
 {
   public:
 
-    inline Layout( const char *fileName = "Layout.txt" );
+    inline  Layout  ( const char *fileName = "Layout.txt" );
+    virtual ~Layout () = default;
 
     inline bool setFile( const char *fileName );
 
