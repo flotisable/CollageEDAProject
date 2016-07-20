@@ -7,11 +7,11 @@
 #include <fstream>
 using namespace std;
 
-#include "../Lib/Model/SubcktModel.h"
-#include "../Lib/Model/ICModel.h"
+#include "../Lib/Model/CircuitModel.h"
 #include "../Lib/Model/MosModel.h"
 #include "../Lib/Node/MosNode.h"
 #include "../Lib/Node/NetNode.h"
+#include "../Lib/Component/Circuit.h"
 #include "../Lib/Component/Mos.h"
 #include "../Lib/Component/Layer.h"
 #include "../Lib/Graphic/Rectangle.h"
@@ -19,21 +19,21 @@ using namespace std;
 
 bool ICRouting::routing()
 {
-  vector<Model*>  &subcktModels = m_model->subcktModel();
+  vector<Model*>  &circuitModels = mModel->circuitModel();
   bool            success     = true;
 
-  for( int i = subcktModels.size() - 1 ; i >= 0 ; i-- )
+  for( int i = circuitModels.size() - 1 ; i >= 0 ; i-- )
   {
-     SubcktModel* model = static_cast<SubcktModel*>( subcktModels[i] );
+     CircuitModel* model = static_cast<CircuitModel*>( circuitModels[i] );
 
-     if( model->subcktCell().size() ) success &= gridRouting    ( model );
-     else                             success &= channelRouting ( model );
+     if( model->circuitCell().size() )  success &= gridRouting    ( model );
+     else                               success &= channelRouting ( model );
   }
 
-  return success &= gridRouting( m_model );
+  return success &= gridRouting( mModel );
 }
 
-bool ICRouting::channelRouting( SubcktModel *model )
+bool ICRouting::channelRouting( CircuitModel *model )
 {
   vector<Node*> &mosNodes = model->mosCell();
 
@@ -691,7 +691,7 @@ bool ICRouting::channelRouting( SubcktModel *model )
   return true;
 }
 
-bool ICRouting::gridRouting( SubcktModel *model )
+bool ICRouting::gridRouting( CircuitModel *model )
 {
   return true;
 }

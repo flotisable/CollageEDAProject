@@ -34,9 +34,9 @@ class Rectangle // ¯x§Î
 		
   private:
 
-		Point   m_center;
-    double  m_height;
-    double  m_width;
+		Point   mCenter;
+    double  mHeight;
+    double  mWidth;
 };
 
 // Rectangle non-member function
@@ -47,36 +47,36 @@ std::ostream& operator<<( std::ostream &out , const Rectangle &rect );
 inline Rectangle::Rectangle( const Point &center , double h , double w )
 : Rectangle( center.x() , center.y() , h , w ) {}
 
-inline const Point& Rectangle::center() const { return m_center; }
-inline double       Rectangle::width () const { return m_width;  }
-inline double       Rectangle::height() const { return m_height; }
+inline const Point& Rectangle::center() const { return mCenter; }
+inline double       Rectangle::width () const { return mWidth;  }
+inline double       Rectangle::height() const { return mHeight; }
 
 inline void Rectangle::setCenter  ( double x , double y )
-{ m_center  = Point( x , y ); }
+{ mCenter  = Point( x , y ); }
 inline void Rectangle::setCenter  ( const Point &p      )
-{ m_center  = p;              }
+{ mCenter  = p;              }
 inline void Rectangle::setCenterX ( double      x       )
-{ m_center.setX( x );         }
+{ mCenter.setX( x );         }
 inline void Rectangle::setCenterY ( double      y       )
-{ m_center.setY( y );         }
+{ mCenter.setY( y );         }
 inline void Rectangle::setWidth   ( double      w       )
-{ m_width   = w;              }
+{ mWidth   = w;              }
 inline void Rectangle::setHeight  ( double      h       )
-{ m_height  = h;              }
+{ mHeight  = h;              }
 
 inline double Rectangle::area  () const
-{ return m_width       * m_height;     }
+{ return mWidth       * mHeight;     }
 inline double Rectangle::top   () const
-{ return m_center.y()  + m_height / 2; }
+{ return mCenter.y()  + mHeight / 2; }
 inline double Rectangle::bottom() const
-{ return m_center.y()  - m_height / 2; }
+{ return mCenter.y()  - mHeight / 2; }
 inline double Rectangle::left  () const
-{ return m_center.x()  - m_width  / 2; }
+{ return mCenter.x()  - mWidth  / 2; }
 inline double Rectangle::right () const
-{ return m_center.x()  + m_width  / 2; }
+{ return mCenter.x()  + mWidth  / 2; }
 
 inline Rectangle Rectangle::operator+( const Point &p ) const
-{ return Rectangle( m_center + p , m_height , m_width ); }
+{ return Rectangle( mCenter + p , mHeight , mWidth ); }
 // end Rectangle inline member function
 
 #endif

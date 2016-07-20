@@ -3,12 +3,12 @@
 #include <ctype.h>
 #include <queue>
 
-#include "../Model/SubcktModel.h"
+#include "../Model/CircuitModel.h"
 #include "../Model/MosModel.h"
-#include "../Model/ICModel.h"
 #include "../Node/NetNode.h"
 #include "../Node/MosNode.h"
-#include "../Node/SubcktNode.h"
+#include "../Node/CircuitNode.h"
+#include "../Component/Circuit.h"
 #include "../Component/Mos.h"
 
 const string  Hspice::SUBCKT_HEAD_KEYWORD = ".SUBCKT";
@@ -26,7 +26,7 @@ Hspice::Hspice( TechFile *techFile ) : tech( techFile )
 
 Hspice::~Hspice()
 {
-  for( SubcktModel *model : models )
+  for( CircuitModel *model : models )
      if( model ) delete model;
 }
 
@@ -51,7 +51,7 @@ bool Hspice::read( const char *fileName )
         
         if( index == -1 )
         {
-          SubcktModel *model = new SubcktModel;
+          CircuitModel *model = new CircuitModel;
         
           model->setName    ( word[SUBCKT_NAME] );
           model->setTechFile( tech );
@@ -77,7 +77,7 @@ bool Hspice::write( const char *fileName )
 	
 	if( file.is_open() )
 	{
-    for( SubcktModel *model : models )  writeSubcktModel( model );
+    for( CircuitModel *model : models ) writeCircuitModel( model );
 		file.close();
 		return true;
 	}
@@ -86,10 +86,10 @@ bool Hspice::write( const char *fileName )
 
 void Hspice::mergeModel()
 {
-  int                 mainCircuitNum = 0;
-  queue<SubcktModel*> pipe;
+  int                   mainCircuitNum = 0;
+  queue<CircuitModel*>  pipe;
 
-  for( SubcktModel *model : models )
+  for( CircuitModel *model : models )
      if( model->isMainCircuit() )
      {
        models[mainCircuitNum] = model;
@@ -97,31 +97,33 @@ void Hspice::mergeModel()
      }
   models.resize( mainCircuitNum );
 
-  for( SubcktModel *model : models )
+  for( CircuitModel *model : models )
   {
-     vector<Model*> &subcktModels = model->subcktModel();
+     vector<Model*> &circuitModels = model->circuitModel();
 
      pipe.push( model );
 
      while( pipe.size() )
      {
-       ICModel  *temp       = pipe.front();
-       int      parentIndex = model->searchModel( Model::SUBCKT ,
+       Circuit  *temp       = pipe.front();
+       int      parentIndex = model->searchModel( Model::CIRCUIT ,
                                                   pipe.front() );
 
-       for( Node *node : temp->subcktCell() )
+       for( Node *node : temp->circuitCell() )
        {
-          SubcktModel *subckt = static_cast<SubcktNode*>( node )->model();
-          int         index   = model->searchModel( Model::SUBCKT , subckt );
+          CircuitModel  *circuit  = static_cast<CircuitNode*>( node )
+                                    ->model();
+          int           index     = model->searchModel( Model::CIRCUIT ,
+                                                        circuit );
 
           if( index == -1 )
           {
-            pipe.push( subckt );
-            subcktModels.push_back( subckt );
+            pipe.push( circuit );
+            circuitModels.push_back( circuit );
           }
           else
             if( index < parentIndex )
-              swap( subcktModels[index] , subcktModels[parentIndex] );
+              swap( circuitModels[index] , circuitModels[parentIndex] );
        }
        pipe.pop();
      }
@@ -131,7 +133,7 @@ void Hspice::mergeModel()
 
 void Hspice::setupModel( int index )
 {
-  ICModel *model = models[index];
+  Circuit *model = models[index];
 
   // io pin
   for( register unsigned int i = SUBCKT_NET ; i < word.size() ; i++ )
@@ -161,7 +163,7 @@ void Hspice::setupModel( int index )
   }
 }
 
-void Hspice::setupMos( ICModel *model )
+void Hspice::setupMos( Circuit *model )
 {
   unsigned int  wordIndex = 0;
   MosNode       *node     = new MosNode;
@@ -214,11 +216,11 @@ void Hspice::setupMos( ICModel *model )
   node->setModel( static_cast<MosModel*>( model->mosModel()[index] ) );
 }
 
-void Hspice::setupSubckt( ICModel *model )
+void Hspice::setupSubckt( Circuit *model )
 {
-  SubcktNode *node = new SubcktNode;
+  CircuitNode *node = new CircuitNode;
 
-  model->subcktCell().push_back( node );
+  model->circuitCell().push_back( node );
   node->setName( word[X_NAME] );
 
   // ste net
@@ -229,11 +231,11 @@ void Hspice::setupSubckt( ICModel *model )
 
   if( index == -1 )
   {
-    SubcktModel *subcktModel = new SubcktModel;
+    CircuitModel *circuitModel = new CircuitModel;
     
-    subcktModel->setTechFile( tech );
+    circuitModel->setTechFile( tech );
   
-    models.push_back( subcktModel );
+    models.push_back( circuitModel );
     models.back()->setName( word.back() );
 
     index = models.size() - 1;
@@ -243,7 +245,7 @@ void Hspice::setupSubckt( ICModel *model )
   node->setModel( models[index] );
 }
 
-void Hspice::setupNode( Node *node , ICModel *model , const string &netName )
+void Hspice::setupNode( Node *node , Circuit *model , const string &netName )
 {
   int index = model->searchNode( Node::NET , netName );
 
@@ -299,7 +301,7 @@ int Hspice::searchModel( const string &name )
   return -1;
 }
 
-void Hspice::writeSubcktModel( SubcktModel *model )
+void Hspice::writeCircuitModel( CircuitModel *model )
 {
   file << "subckt name : " << model->name   ()  << endl;
   file << "height      : " << model->height ()  << endl;
@@ -318,12 +320,12 @@ void Hspice::writeSubcktModel( SubcktModel *model )
 	for( Node *node : model->mosCell() )
 		 file << *static_cast<MosNode*>( node ) << endl;
 
-	for( Node *node : model->subcktCell() )
-     file << *static_cast<SubcktNode*>( node ) << endl;
+	for( Node *node : model->circuitCell() )
+     file << *static_cast<CircuitNode*>( node ) << endl;
 
   file << endl;
 
-  for( Model *subcktModel : model->subcktModel() )
-     writeSubcktModel( static_cast<SubcktModel*>( subcktModel ) );
+  for( Model *circuitModel : model->circuitModel() )
+     writeCircuitModel( static_cast<CircuitModel*>( circuitModel ) );
   file << endl;
 }

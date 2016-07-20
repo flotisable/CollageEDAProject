@@ -19,7 +19,7 @@ class Node : public Rectangle
       IO,
       NET,
       MOS,
-      SUBCKT,
+      CIRCUIT,
       TYPE_NUM
     };
 
@@ -43,32 +43,32 @@ class Node : public Rectangle
 
   private:
 
-    string  m_name;
-    int     m_visit;
-    Type    m_type;
-    int     m_cost;
+    string  mName;
+    int     mVisit;
+    Type    mType;
+    int     mCost;
 
-    vector<Node*>	m_connect;
+    vector<Node*>	mConnect;
 };
 
 // Node inline member function
-inline Node::Node( Type t ) : m_visit( 0 ) , m_type( t ) {}
+inline Node::Node( Type t ) : mVisit( 0 ) , mType( t ) {}
 
 inline bool Node::costCompare( Node* front , Node* back )
 { return front->cost() > back->cost(); }
 inline bool Node::costCompare( Node  front , Node  back )
 { return front.cost() > back.cost(); }
 
-inline const string&  Node::name    () const  { return m_name;    }
-inline int            Node::visit   () const  { return m_visit;   }
-inline Node::Type     Node::type    () const  { return m_type;    }
-inline int            Node::cost    () const  { return m_cost;    }
-inline vector<Node*>& Node::connect ()        { return m_connect; }
+inline const string&  Node::name    () const  { return mName;    }
+inline int            Node::visit   () const  { return mVisit;   }
+inline Node::Type     Node::type    () const  { return mType;    }
+inline int            Node::cost    () const  { return mCost;    }
+inline vector<Node*>& Node::connect ()        { return mConnect; }
 
-inline void Node::setName ( const string  &s    ) { m_name  = s;    }
-inline void Node::setVisit( int           i     ) { m_visit = i;    }
-inline void Node::setType ( Type          t     ) { m_type  = t;    }
-inline void Node::setCost ( int           cost  ) { m_cost  = cost; }
+inline void Node::setName ( const string  &s    ) { mName  = s;    }
+inline void Node::setVisit( int           i     ) { mVisit = i;    }
+inline void Node::setType ( Type          t     ) { mType  = t;    }
+inline void Node::setCost ( int           cost  ) { mCost  = cost; }
 // end Node inline member function
 
 #endif

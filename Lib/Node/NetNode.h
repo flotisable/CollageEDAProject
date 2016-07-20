@@ -16,7 +16,7 @@ class NetNode : public Node
 
   private:
 
-    vector<Layer> m_nets;
+    vector<Layer> mNets;
 };
 
 ostream& operator<<( ostream &out , NetNode &node );
@@ -24,7 +24,7 @@ ostream& operator<<( ostream &out , NetNode &node );
 // NetNode inline member function
 inline NetNode::NetNode() : Node( NET ) {}
 
-inline vector<Layer>& NetNode::nets() { return m_nets; }
+inline vector<Layer>& NetNode::nets() { return mNets; }
 // end NetNode inline member function
 
 #endif

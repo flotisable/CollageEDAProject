@@ -6,7 +6,7 @@
 
 #include "../TechFile/TechFile.h"
 
-Mos::Mos() : m_type( UNKNOWN ) , tech( nullptr )
+Mos::Mos() : mType( UNKNOWN ) , tech( nullptr )
 {
   diff.setLayer( "DIFF"   );
   g   .setLayer( "POLY1"  );
@@ -15,11 +15,11 @@ Mos::Mos() : m_type( UNKNOWN ) , tech( nullptr )
 Mos::Mos( int type , double w , double l , unsigned int m ,
           TechFile *techFile )
 {
-  m_type  = type;
-  m_w     = w;
-  m_l     = l;
-  m_m     = m;
-  tech    = techFile;
+  mType = type;
+  mW    = w;
+  mL    = l;
+  mM    = m;
+  tech  = techFile;
   diff.setLayer( "DIFF"   );
   g   .setLayer( "POLY1"  );
 }
@@ -34,8 +34,8 @@ void Mos::generate()
   double conWidth   = tech->rule( SpacingRule::MIN_WIDTH     ,  "CONT"  );
 
   diff.setCenter( 0 , 0 );
-  diff.setHeight( m_w );
-  diff.setWidth ( m_l + 2 * ( conInDiff + conWidth + conAndPoly ) );
+  diff.setHeight( mW );
+  diff.setWidth ( mL + 2 * ( conInDiff + conWidth + conAndPoly ) );
   // end set diffusion
 
   // set gate
@@ -43,8 +43,8 @@ void Mos::generate()
                                                                 "DIFF"  );
   
   g.setCenter ( 0 , 0 );
-  g.setHeight ( m_w + 2 * diffInPoly );
-  g.setWidth  ( m_l );
+  g.setHeight ( mW + 2 * diffInPoly );
+  g.setWidth  ( mL );
   // end set gate
 
   // set metal
@@ -52,13 +52,13 @@ void Mos::generate()
   double  conInMetal  = tech->rule( SpacingRule::MIN_ENCLOSURE ,  "METAL1" ,
                                                                   "CONT"  );
 
-  int     conNum  = 1 + ( m_w - 2 * conInDiff - conWidth ) /
+  int     conNum  = 1 + ( mW - 2 * conInDiff - conWidth ) /
                     ( conWidth + conSpace );
   double  metalH  = conNum * ( conWidth + conSpace ) -
                     conSpace + 2 * 0.06/*conInMetal*/;
   double  metalW  = conWidth  + 2 * conInMetal;
-  double  metalX  = ( m_l + conWidth  ) / 2 + conAndPoly;
-  double  metalY  = ( m_w - metalH    ) / 2 - conInDiff   +
+  double  metalX  = ( mL + conWidth  ) / 2 + conAndPoly;
+  double  metalY  = ( mW - metalH    ) / 2 - conInDiff   +
                      0.06/*conInMetal*/;
 
   s.clear();
@@ -97,7 +97,7 @@ void Mos::generate()
   // set implant
   string impLayer;
   
-  switch( m_type )
+  switch( mType )
   {
     case NMOS: impLayer = "NIMP"; break;
     case PMOS: impLayer = "PIMP"; break;
@@ -161,22 +161,22 @@ bool Mos::read( const char *fileName )
       if      ( id == "Type" )
       {
         while( id != ":" )  file >> id;
-        file >> m_type;
+        file >> mType;
       }
       else if ( id == "W" )
       {
         while( id != ":" )  file >> id;
-        file >> m_w;
+        file >> mW;
       }
       else if ( id == "L" )
       {
         while( id != ":" )  file >> id;
-        file >> m_l;
+        file >> mL;
       }
       else if ( id == "M" )
       {
         while( id != ":" )  file >> id;
-        file >> m_m;
+        file >> mM;
       }
     }
 

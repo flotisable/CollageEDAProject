@@ -57,10 +57,10 @@ class ViaDevice
     TechFile  *tech;
     
     string        via;
-    int           m_type;
-    Point         m_center;
-    unsigned int  m_row;
-    unsigned int  m_col;
+    int           mType;
+    Point         mCenter;
+    unsigned int  mRow;
+    unsigned int  mCol;
     
     vector<vector<Layer>> contacts;
     Layer                 m;
@@ -72,20 +72,20 @@ inline ViaDevice::ViaDevice(  const string &viaLayer , const Point &center ,
                               int row , int col , TechFile *techFile )
 : ViaDevice( viaLayer , center.x() , center.y() , row , col , techFile ) {}
 
-inline const string&  ViaDevice::viaLayer() const { return via;       }
-inline int            ViaDevice::type    () const { return m_type;    }
-inline const Point&   ViaDevice::center  () const { return m_center;  }
-inline int            ViaDevice::row     () const { return m_row;     }
-inline int            ViaDevice::column  () const { return m_col;     }
+inline const string&  ViaDevice::viaLayer() const { return via;     }
+inline int            ViaDevice::type    () const { return mType;   }
+inline const Point&   ViaDevice::center  () const { return mCenter; }
+inline int            ViaDevice::row     () const { return mRow;    }
+inline int            ViaDevice::column  () const { return mCol;    }
 
 inline void ViaDevice::setViaLayer( const string  &viaLayer )
 { via       = viaLayer;       }
 inline void ViaDevice::setType    ( Type          type      )
-{ m_type    = type;           }
+{ mType    = type;            }
 inline void ViaDevice::setCenter  ( const Point   &center   )
-{ m_center  = center;         }
+{ mCenter  = center;          }
 inline void ViaDevice::setCenter  ( double x , double y     )
-{ m_center  = Point( x , y ); }
+{ mCenter  = Point( x , y );  }
 
 inline void ViaDevice::setTechFile( TechFile *techFile )
 { tech = techFile; }

@@ -1,39 +1,39 @@
 #ifndef IC_ROUTING_H
 #define IC_ROUTING_H
 
-class SubcktModel;
+class CircuitModel;
 class TechFile;
 
 class ICRouting
 {
   public:
 
-    inline ICRouting( SubcktModel *model    = nullptr ,
-                      TechFile    *techFile = nullptr );
+    inline ICRouting( CircuitModel  *model    = nullptr ,
+                      TechFile      *techFile = nullptr );
 
-    inline SubcktModel* model();
+    inline CircuitModel* model();
 
-    inline void setModel    ( SubcktModel *model    );
-    inline void setTechFile ( TechFile    *techFile );
+    inline void setModel    ( CircuitModel  *model    );
+    inline void setTechFile ( TechFile      *techFile );
 
     bool routing();
 
   private:
 
-    TechFile    *tech;
-    SubcktModel *m_model;
+    TechFile      *tech;
+    CircuitModel  *mModel;
 
-    bool channelRouting ( SubcktModel *model );
-    bool gridRouting    ( SubcktModel *model );
+    bool channelRouting ( CircuitModel *model );
+    bool gridRouting    ( CircuitModel *model );
 };
 
-inline ICRouting::ICRouting( SubcktModel *model , TechFile *techFile )
-: tech( techFile ) , m_model( model ) {}
+inline ICRouting::ICRouting( CircuitModel *model , TechFile *techFile )
+: tech( techFile ) , mModel( model ) {}
 
-inline SubcktModel* ICRouting::model() { return m_model; }
+inline CircuitModel* ICRouting::model() { return mModel; }
 
-inline void ICRouting::setModel   ( SubcktModel *model    )
-{ m_model = model;    }
+inline void ICRouting::setModel   ( CircuitModel *model   )
+{ mModel = model;    }
 inline void ICRouting::setTechFile( TechFile    *techFile )
 { tech    = techFile; }
 

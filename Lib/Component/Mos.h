@@ -56,10 +56,10 @@ class Mos
 
   private:
 
-    int           m_type;
-    double        m_w;
-    double        m_l;
-    unsigned int  m_m;
+    int           mType;
+    double        mW;
+    double        mL;
+    unsigned int  mM;
     
     Layer         diff;
     vector<Layer> s;
@@ -78,15 +78,15 @@ ostream& operator<<( ostream &out , Mos &mos );
 // end Mos non-memeber function
 
 // Mos inline member function
-inline int          Mos::type() const { return m_type; }
-inline double       Mos::w   () const { return m_w;    }
-inline double       Mos::l   () const { return m_l;    }
-inline unsigned int Mos::m   () const { return m_m;    }
+inline int          Mos::type() const { return mType; }
+inline double       Mos::w   () const { return mW;    }
+inline double       Mos::l   () const { return mL;    }
+inline unsigned int Mos::m   () const { return mM;    }
 
-inline void Mos::setType( Type          t ) { m_type  = t; }
-inline void Mos::setW   ( double        w ) { m_w     = w; }
-inline void Mos::setL   ( double        l ) { m_l     = l; }
-inline void Mos::setM   ( unsigned int  m ) { m_m     = m; }
+inline void Mos::setType( Type          t ) { mType  = t; }
+inline void Mos::setW   ( double        w ) { mW     = w; }
+inline void Mos::setL   ( double        l ) { mL     = l; }
+inline void Mos::setM   ( unsigned int  m ) { mM     = m; }
 
 inline void Mos::setTechFile( TechFile *techFile ) { tech = techFile; }
 
@@ -98,8 +98,8 @@ inline const Layer&         Mos::implant  () const { return imp ; }
 
 inline bool Mos::operator==( const Mos &mos )
 {
-  return (  m_type  == mos.type() && m_w == mos.w() &&
-            m_l     == mos.l()    && m_m == mos.m() );
+  return (  mType == mos.type () && mW == mos.w() &&
+            mL    == mos.l    () && mM == mos.m() );
 }
 // end Mos inline member function
 

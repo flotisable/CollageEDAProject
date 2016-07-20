@@ -7,7 +7,7 @@
 using namespace std;
 
 #include "../Lib/Spice/Hspice.h"
-#include "../Lib/Model/SubcktModel.h"
+#include "../Lib/Model/CircuitModel.h"
 #include "../Lib/TechFile/CadenceTechFile.h"
 #include "../Lib/Layout/SkillLayout.h"
 #include "ICPlacement.h"
@@ -25,7 +25,7 @@ int main()
   for( int i = 1 ; i <= TIMES ; i++ )
   {
      TechFile     *techFile = new CadenceTechFile;
-     SubcktModel  *model;
+     CircuitModel *model;
      Hspice       hspice( techFile );
      Layout       *layout   = new SkillLayout;
      double       start = clock();
@@ -46,7 +46,7 @@ int main()
 
        model = hspice.model();
        model->generate();
-    
+
        ICPlacement  placer( model , techFile );
        ICRouting    router( model , techFile );
 
@@ -54,7 +54,7 @@ int main()
        router.routing   ();
 
        layout->setCenter( 0 , 0 );
-       layout->drawSubckt( model );
+       layout->drawCircuit( model );
        layout->drawRect( "NWELL" , static_cast<Rectangle>( *model ) );
 
        if( hspice.write() ) cout << "Write\n";

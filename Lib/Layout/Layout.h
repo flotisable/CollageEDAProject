@@ -11,7 +11,7 @@ using namespace std;
 
 class Mos;
 class ViaDevice;
-class ICModel;
+class Circuit;
 
 class Layout
 {
@@ -36,7 +36,7 @@ class Layout
 
     bool drawMos      ( Mos       *mos        );
     bool drawViaDevice( ViaDevice *viaDevice  );
-    bool drawSubckt   ( ICModel   *subckt     );
+    bool drawCircuit  ( Circuit   *circuit    );
 
   protected:
 

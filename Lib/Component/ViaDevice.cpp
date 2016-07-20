@@ -7,8 +7,8 @@ ViaDevice::ViaDevice( const string &viaLayer ,
                       int row , int col , TechFile *techFile )
 {
   via       = viaLayer;
-  m_center  = Point( centerX , centerY );
-  m_row     = m_col = 0;
+  mCenter  = Point( centerX , centerY );
+  mRow     = mCol = 0;
   setRow    ( row );
   setColumn ( col );
   tech      = techFile;
@@ -20,11 +20,11 @@ void ViaDevice::setRow( unsigned int row )
   if( row )
   {
     contacts.resize( row );
-    if( row > m_row )
-      for( register unsigned int i = m_row ; i < row ; i++ )
-         contacts[i].resize( m_col );
+    if( row > mRow )
+      for( register unsigned int i = mRow ; i < row ; i++ )
+         contacts[i].resize( mCol );
   
-    m_row = row;
+    mRow = row;
   }
 }
 
@@ -32,9 +32,9 @@ void ViaDevice::setColumn( unsigned int col )
 {
   if( col )
   {
-    for( register unsigned int i = 0 ; i < m_row ; i++ )
+    for( register unsigned int i = 0 ; i < mRow ; i++ )
        contacts[i].resize( col );
-    m_col = col;
+    mCol = col;
   }
 }
                 
@@ -44,32 +44,32 @@ void ViaDevice::generate()
   double    conWidth = tech->rule( SpacingRule::MIN_WIDTH    , via );
   double    conSpace = tech->rule( SpacingRule::MIN_SPACING  , via );
   double    unitCont = conWidth + conSpace;
-  double    conX     = -( ( m_col - 1 ) * ( unitCont ) ) / 2;
-  double    conY     =  ( ( m_row - 1 ) * ( unitCont ) ) / 2;
+  double    conX     = -( ( mCol - 1 ) * ( unitCont ) ) / 2;
+  double    conY     =  ( ( mRow - 1 ) * ( unitCont ) ) / 2;
   Layer model;
   
   model.setLayer ( via      );
   model.setWidth ( conWidth );
   model.setHeight( conWidth );
 
-  for( register unsigned int i = 0 ; i < m_row ; i++ )
+  for( register unsigned int i = 0 ; i < mRow ; i++ )
   {
-     for( register unsigned int j = 0 ; j < m_col ; j++ )
+     for( register unsigned int j = 0 ; j < mCol ; j++ )
      {
         model.setCenter( conX , conY );
         contacts[i][j] = model;
         conX += unitCont;
      }
      conY -= unitCont;
-     conX -= ( m_col - 1 ) * unitCont;
+     conX -= ( mCol - 1 ) * unitCont;
   }
   // end set contact
   
   // set metal
   double conInMetal = tech->rule( SpacingRule::MIN_ENCLOSURE ,  "METAL1" ,
                                                                 via );
-  double metalH     = m_row * unitCont - conSpace + 2 * conInMetal;
-  double metalW     = m_col * unitCont - conSpace + 2 * conInMetal;
+  double metalH     = mRow * unitCont - conSpace + 2 * conInMetal;
+  double metalW     = mCol * unitCont - conSpace + 2 * conInMetal;
   
   m.setLayer  ( "METAL1" );
   m.setCenter ( 0 , 0 );
@@ -89,7 +89,7 @@ void ViaDevice::generate()
   // set implant
   string impLayer;
   
-  switch( m_type )
+  switch( mType )
   {
     case N:   impLayer = "NIMP";  break;
     case P:   impLayer = "PIMP";  break;

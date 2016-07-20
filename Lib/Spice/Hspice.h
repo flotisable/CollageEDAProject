@@ -7,8 +7,8 @@
 using namespace std;
 
 class TechFile;
-class SubcktModel;
-class ICModel;
+class CircuitModel;
+class Circuit;
 class Node;
 
 class Hspice
@@ -53,7 +53,7 @@ class Hspice
     Hspice( TechFile *techFile = nullptr );
     ~Hspice();
 
-    inline SubcktModel* model() const;
+    inline CircuitModel* model() const;
 
     inline void setTechFile( TechFile *techFile );
     
@@ -67,14 +67,14 @@ class Hspice
   private:
 
     void setupModel ( int     index   );
-    void setupMos   ( ICModel *model  );
-    void setupSubckt( ICModel *model  );
-    void setupNode  ( Node *node , ICModel *model , const string &netName );
+    void setupMos   ( Circuit *model  );
+    void setupSubckt( Circuit *model  );
+    void setupNode  ( Node *node , Circuit *model , const string &netName );
 
     void  getWord     ();
     int   searchModel ( const string &name );
     
-    void writeSubcktModel( SubcktModel *model );
+    void writeCircuitModel( CircuitModel *model );
     
     static inline bool isNullChar( char c );
 
@@ -83,7 +83,7 @@ class Hspice
     static const int    MAIN;
 
     TechFile              *tech;
-    vector<SubcktModel*>  models;
+    vector<CircuitModel*> models;
 
     fstream         file;
     string          buffer;
@@ -91,7 +91,7 @@ class Hspice
     vector<string>  id;
 };
 
-inline SubcktModel* Hspice::model() const
+inline CircuitModel* Hspice::model() const
 { return models[MAIN]; }
 
 inline void Hspice::setTechFile( TechFile *techFile )

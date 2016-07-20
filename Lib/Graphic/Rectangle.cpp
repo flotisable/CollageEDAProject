@@ -6,9 +6,9 @@
 Rectangle::Rectangle( double centerX  , double centerY ,
                       double h        , double w          )
 {
-  m_center  = Point( centerX , centerY );
-  m_height  = h;
-  m_width   = w;
+  mCenter  = Point( centerX , centerY );
+  mHeight  = h;
+  mWidth   = w;
 }
 // end Rectangle member function
 

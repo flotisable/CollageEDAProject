@@ -1,10 +1,10 @@
-#include "SubcktNode.h"
+#include "CircuitNode.h"
 
 #include <iomanip>
 
-#include "../Model/SubcktModel.h"
+#include "../Model/CircuitModel.h"
 
-ostream& operator<<( ostream &out , SubcktNode &node )
+ostream& operator<<( ostream &out , CircuitNode &node )
 {
   static const int TAB = 10;
   

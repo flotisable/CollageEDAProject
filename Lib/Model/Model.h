@@ -11,7 +11,7 @@ class Model : public Rectangle
     {
       UNKNOWN = -1,
       MOS,
-      SUBCKT,
+      CIRCUIT,
       TYPE_NUM
     };
 
@@ -23,15 +23,15 @@ class Model : public Rectangle
 
   private:
   
-    Type m_type;
+    Type mType;
 };
 
 // Model inline member function
-inline Model::Model( Type t ) : m_type( t ) {}
+inline Model::Model( Type t ) : mType( t ) {}
 
-inline Model::Type Model::type() const { return m_type; }
+inline Model::Type Model::type() const { return mType; }
 
-inline void Model::setType( Type t ) { m_type = t; }
+inline void Model::setType( Type t ) { mType = t; }
 // end Model inline member function
 
 #endif

@@ -26,8 +26,8 @@ class Point // 點
 
   private:
 
-    double m_x; // x座標
-    double m_y; // y座標
+    double mX; // x座標
+    double mY; // y座標
 };
 
 // Point non-member function
@@ -37,25 +37,25 @@ std::ostream& operator<<( std::ostream &out , const Point &point );
 // Point inline member funcion
 inline Point::Point( double x , double y ) { set( x , y ); }
 
-inline double Point::x() const { return m_x; }
-inline double Point::y() const { return m_y; }
+inline double Point::x() const { return mX; }
+inline double Point::y() const { return mY; }
 
-inline void Point::setX( double x )                   { m_x = x; }
-inline void Point::setY( double y )                   { m_y = y; }
-inline void Point::set ( double x , const double y )  { m_x = x;
-                                                        m_y = y; }
+inline void Point::setX( double x )                   { mX = x; }
+inline void Point::setY( double y )                   { mY = y; }
+inline void Point::set ( double x , const double y )  { mX = x;
+                                                        mY = y; }
 
 inline Point Point::operator+( const Point &p ) const
-{ return Point( m_x + p.x() , m_y + p.y() ); }
+{ return Point( mX + p.x() , mY + p.y() ); }
 inline Point Point::operator-( const Point &p ) const
-{ return Point( m_x - p.x() , m_y - p.y() ); }
+{ return Point( mX - p.x() , mY - p.y() ); }
 inline Point& Point::operator+= ( const Point &p )
 { return *this = *this + p; }
 inline Point& Point::operator-= ( const Point &p )
 { return *this = *this - p; }
 
 inline bool Point::operator==( const Point &p ) const
-{ return ( m_x == p.x() && m_y == p.y() ); }
+{ return ( mX == p.x() && mY == p.y() ); }
 // end Point inline member funcion
 
 #endif
