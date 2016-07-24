@@ -21,22 +21,22 @@ class ViaDevice
       P
     };
 
-    ViaDevice(  const   string &viaLayer = "CONT" ,
+    ViaDevice(  Layer::Type viaLayer = Layer::CONTACT ,
                 double  centerX = 0 , double  centerY = 0 ,
                 int     row     = 1 , int     col     = 1 ,
                 TechFile *techFile = nullptr );
 
-    inline ViaDevice( const string &viaLayer , const Point &center ,
+    inline ViaDevice( Layer::Type viaLayer , const Point &center ,
                       int row , int col , TechFile *techFile = nullptr );
     
   
-    inline const string&  viaLayer() const;
-    inline int            type    () const;
-    inline const Point&   center  () const;
-    inline int            row     () const;
-    inline int            column  () const;
+    inline Layer::Type  viaLayer() const;
+    inline int          type    () const;
+    inline const Point& center  () const;
+    inline int          row     () const;
+    inline int          column  () const;
     
-    inline void setViaLayer ( const string  &viaLayer );
+    inline void setViaLayer ( Layer::Type   viaLayer );
     inline void setType     ( Type          type      );
     inline void setCenter   ( const Point   &center   );
     inline void setCenter   ( double x , double y     );
@@ -56,7 +56,7 @@ class ViaDevice
   
     TechFile  *tech;
     
-    string        via;
+    Layer::Type   via;
     int           mType;
     Point         mCenter;
     unsigned int  mRow;
@@ -68,23 +68,23 @@ class ViaDevice
     Layer                 imp;
 };
 
-inline ViaDevice::ViaDevice(  const string &viaLayer , const Point &center ,
+inline ViaDevice::ViaDevice(  Layer::Type viaLayer , const Point &center ,
                               int row , int col , TechFile *techFile )
 : ViaDevice( viaLayer , center.x() , center.y() , row , col , techFile ) {}
 
-inline const string&  ViaDevice::viaLayer() const { return via;     }
-inline int            ViaDevice::type    () const { return mType;   }
-inline const Point&   ViaDevice::center  () const { return mCenter; }
-inline int            ViaDevice::row     () const { return mRow;    }
-inline int            ViaDevice::column  () const { return mCol;    }
+inline Layer::Type  ViaDevice::viaLayer () const { return via;     }
+inline int          ViaDevice::type     () const { return mType;   }
+inline const Point& ViaDevice::center   () const { return mCenter; }
+inline int          ViaDevice::row      () const { return mRow;    }
+inline int          ViaDevice::column   () const { return mCol;    }
 
-inline void ViaDevice::setViaLayer( const string  &viaLayer )
+inline void ViaDevice::setViaLayer( Layer::Type viaLayer  )
 { via       = viaLayer;       }
-inline void ViaDevice::setType    ( Type          type      )
+inline void ViaDevice::setType    ( Type        type      )
 { mType    = type;            }
-inline void ViaDevice::setCenter  ( const Point   &center   )
+inline void ViaDevice::setCenter  ( const Point &center   )
 { mCenter  = center;          }
-inline void ViaDevice::setCenter  ( double x , double y     )
+inline void ViaDevice::setCenter  ( double x , double y   )
 { mCenter  = Point( x , y );  }
 
 inline void ViaDevice::setTechFile( TechFile *techFile )

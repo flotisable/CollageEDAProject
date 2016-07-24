@@ -11,7 +11,7 @@ class CadenceTechFile : public TechFile
 
   protected:
 
-    inline bool nullChar( const char data ) override;
+    inline bool isNullChar( const char data ) override;
 
     bool findBlock() override;
     void catchWord() override;
@@ -23,9 +23,11 @@ class CadenceTechFile : public TechFile
     inline bool readBool();
 };
 
-inline bool CadenceTechFile::nullChar( const char data )
+// Cadence inline member function
+inline bool CadenceTechFile::isNullChar( const char data )
 { return  data == ' ' || data == '\t'  || data == '"'; }
 
 inline bool CadenceTechFile::readBool() { return ( word == "t" ); }
+// end Cadence inline member function
 
 #endif

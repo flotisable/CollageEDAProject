@@ -2,6 +2,7 @@
 
 #include <ctype.h>
 #include <queue>
+#include <algorithm>
 
 #include "../Model/CircuitModel.h"
 #include "../Model/MosModel.h"
@@ -13,7 +14,6 @@
 
 const string  Hspice::SUBCKT_HEAD_KEYWORD = ".SUBCKT";
 const string  Hspice::SUBCKT_TAIL_KEYWORD = ".ENDS";
-const int     Hspice::MAIN                = 0;
 
 Hspice::Hspice( TechFile *techFile ) : tech( techFile )
 {
@@ -51,10 +51,7 @@ bool Hspice::read( const char *fileName )
         
         if( index == -1 )
         {
-          CircuitModel *model = new CircuitModel;
-        
-          model->setName    ( word[SUBCKT_NAME] );
-          model->setTechFile( tech );
+          CircuitModel *model = new CircuitModel( word[SUBCKT_NAME] , tech );
 
           models.push_back( model );
           index = models.size() - 1;
@@ -127,6 +124,8 @@ void Hspice::mergeModel()
        }
        pipe.pop();
      }
+
+     reverse( circuitModels.begin() , circuitModels.end() );
   }
 }
 

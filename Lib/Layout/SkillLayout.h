@@ -6,18 +6,16 @@
 #include <string>
 using namespace std;
 
-#include "../Graphic/Point.h"
-
 class SkillLayout : public Layout
 {
   public:
   
-    inline  SkillLayout ( const char *fileName = "skillLayout.il" );
+    inline SkillLayout( const char *fileName = "skillLayout.il" );
 
-    inline bool drawRect( const string &layer , const Rectangle &rect );
-    inline bool drawRect( const string &layer , const Point &lb ,
-                                                const Point &rt );
-    bool        drawRect( const string &layer ,
+    inline bool drawRect( Layer::Type layer , const Rectangle &rect );
+    inline bool drawRect( Layer::Type layer , const Point &lb ,
+                                              const Point &rt );
+    bool        drawRect( Layer::Type layer ,
                           double lbX , double lbY ,
                           double rtX , double rtY ) override;
 
@@ -36,14 +34,13 @@ class SkillLayout : public Layout
     static const string DRAW_INSTANCE;
 };
 
+// SkillLayout inline member function
 inline SkillLayout::SkillLayout( const char *fileName ) : Layout( fileName ) {}
 
-inline bool SkillLayout::drawRect(  const string    &layer ,
-                                    const Rectangle &rect )
+inline bool SkillLayout::drawRect( Layer::Type layer , const Rectangle &rect )
 { return Layout::drawRect( layer , rect ); }
-
-inline bool SkillLayout::drawRect( const string &layer ,  const Point &lb ,
-                                                          const Point &rt )
+inline bool SkillLayout::drawRect( Layer::Type layer ,  const Point &lb ,
+                                                        const Point &rt )
 { return Layout::drawRect( layer , lb , rt ); }
 
 inline bool SkillLayout::drawInst(  const string  &lib   ,
@@ -51,5 +48,6 @@ inline bool SkillLayout::drawInst(  const string  &lib   ,
                                     const string  &view  ,
                                     const Point   &pos , double rotate )
 { return drawInst( lib , cell , view , pos.x() , pos.y() , rotate ); }
+// end SkillLayout inline member function
 
 #endif

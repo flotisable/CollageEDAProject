@@ -19,15 +19,16 @@ using namespace std;
 
 bool ICRouting::routing()
 {
-  vector<Model*>  &circuitModels = mModel->circuitModel();
-  bool            success     = true;
+  bool success = true;
 
-  for( int i = circuitModels.size() - 1 ; i >= 0 ; i-- )
+  for( Model *circuitModel : mModel->circuitModel() )
   {
-     CircuitModel* model = static_cast<CircuitModel*>( circuitModels[i] );
+     CircuitModel* model = static_cast<CircuitModel*>( circuitModel );
 
      if( model->circuitCell().size() )  success &= gridRouting    ( model );
      else                               success &= channelRouting ( model );
+     
+     if( !success ) return false;
   }
 
   return success &= gridRouting( mModel );
@@ -46,7 +47,7 @@ bool ICRouting::channelRouting( CircuitModel *model )
           return front->center().y() > front->center().y();
         } );
 
-  int nmosBias = -1;
+  int nmosBias  = -1;
   int pmosFirst = 0;
   int nmosFirst;
 
@@ -84,7 +85,7 @@ bool ICRouting::channelRouting( CircuitModel *model )
   }
   // end set number ³]©w½s¸¹
 
-  vector<NetNode*>  nets;
+  vector<NetNode*> nets;
 
   // set cost
   for( Node *node : model->io() )
@@ -157,7 +158,7 @@ bool ICRouting::channelRouting( CircuitModel *model )
            if( net.center().x() != -1  )
            {
              net.setCenter( net.center().x() , index[j] );
-             nets[i]->nets().push_back( net );
+             nets[i]->segments().push_back( net );
            }
            net.setCenter( index[j] , 0 );
            net.setWidth ( connectMos );
@@ -208,7 +209,7 @@ bool ICRouting::channelRouting( CircuitModel *model )
   // put intervals
   for( unsigned int i = 0 ; i < nets.size() ; i++ )
   {
-     vector<Layer>  &netlist = nets[i]->nets();
+     vector<Layer>  &netlist = nets[i]->segments();
      Layer          interval;
 
      interval.setWidth  ( i );
@@ -408,17 +409,19 @@ bool ICRouting::channelRouting( CircuitModel *model )
      }
      segment.setCenter( leftEdge , rightEdge );
      
-     vector<Layer> &netlist = nets[netIndex]->nets();
+     vector<Layer> &netlist = nets[netIndex]->segments();
      
      for( unsigned int j = listIndex ; j < netlist.size() ; j++ )
      {
         if( netlist[j].center().x() == netlist[j].center().y() )
         {
           // height means metal layer and direction , width means pin or track
-          netInfo[netIndex].push_back(
-          Layer( "METAL1" , -1 , segmentTrack , 1 , netlist[j].center().x() ) );
-          netInfo[netIndex].push_back(
-          Layer( "METAL1" , segmentTrack , track  , 1 , netlist[j].center().x() ) );
+          netInfo[netIndex].push_back( Layer( Layer::METAL1 ,
+                                              -1 , segmentTrack ,
+                                              netlist[j].center().x() ) );
+          netInfo[netIndex].push_back( Layer( Layer::METAL1 ,
+                                              segmentTrack  , track ,
+                                              netlist[j].center().x() ) );
           listIndex++;
         }
         else if(  netlist[j].center().x() <= leftEdge &&
@@ -428,11 +431,11 @@ bool ICRouting::channelRouting( CircuitModel *model )
             switch( static_cast<int>( netlist[j].width() ) )
             {
               case Mos::NMOS: netInfo[netIndex].push_back(
-                              Layer( "METAL1" , segmentTrack , track ,
-                                          1 , leftEdge ) ); break;
+                              Layer(  Layer::METAL1 , segmentTrack , track ,
+                                      leftEdge ) ); break;
               case Mos::PMOS: netInfo[netIndex].push_back(
-                              Layer( "METAL1" , -1 , segmentTrack    ,
-                                          1 , leftEdge ) ); break;
+                              Layer(  Layer::METAL1 , -1 , segmentTrack    ,
+                                      leftEdge ) ); break;
             }
           else if( netInfo[netIndex].back().height() != 1 )
           {
@@ -451,25 +454,30 @@ bool ICRouting::channelRouting( CircuitModel *model )
               bottomEdge  = segmentTrack;
             }
             
-            netInfo[netIndex].push_back( Layer( "METAL1" , topEdge , bottomEdge ,
-                                                    1 , leftEdge ) );
+            netInfo[netIndex].push_back( Layer( Layer::METAL1  ,
+                                                topEdge   , bottomEdge ,
+                                                leftEdge ) );
           }
-          netInfo[netIndex].push_back( Layer( "METAL2" , segment.center() ,
-                                                  2 , segmentTrack ) );
+          netInfo[netIndex].push_back( Layer( Layer::METAL2 ,
+                                              segment.center().x() ,
+                                              segment.center().y() ,
+                                              segmentTrack ) );
           if( rightEdge >= netlist[j].center().y() )
           {
             switch( static_cast<int>( netlist[j].height() ) )
             {
               case Mos::NMOS:
 
-                netInfo[netIndex].push_back( Layer( "METAL1" , segmentTrack , track ,
-                                                        1 , rightEdge ) );
+                netInfo[netIndex].push_back( Layer( Layer::METAL1 ,
+                                                    segmentTrack , track ,
+                                                    rightEdge ) );
                 break;
                 
               case Mos::PMOS:
 
-                netInfo[netIndex].push_back( Layer( "METAL1" , -1 , segmentTrack    ,
-                                                        1 , rightEdge ) );
+                netInfo[netIndex].push_back( Layer( Layer::METAL1 ,
+                                                    -1  , segmentTrack ,
+                                                    rightEdge ) );
                 break;
             }
             listIndex++;
@@ -486,26 +494,36 @@ bool ICRouting::channelRouting( CircuitModel *model )
   // end merge segments
   
   for( unsigned int i = 0 ; i < nets.size() ; i++ )
-     if( nets[i]->nets().size() )
+     if( nets[i]->segments().size() )
        netInfo[i].push_back(
-       Layer( "METAL1" , -1 , track , 1 , nets[i]->nets().back().center().x() ) );
+       Layer( Layer::METAL1 , -1 , track ,
+              nets[i]->segments().back().center().x() ) );
 
   for( unsigned int i = 0 ; i < netInfo.size() ; i++ )
-     nets[i]->nets() = netInfo[i];
+     nets[i]->segments() = netInfo[i];
 
   // end rough routing
 
   // detail routing
-  double  metal1Width   = tech->rule( SpacingRule::MIN_WIDTH    , "METAL1"  );
-  double  metal1Space   = tech->rule( SpacingRule::MIN_SPACING  , "METAL1"  );
-  double  metal2Width   = tech->rule( SpacingRule::MIN_WIDTH    , "METAL2"  );
-  double  metal2Space   = tech->rule( SpacingRule::MIN_SPACING  , "METAL2"  );
-  double  via12Width    = tech->rule( SpacingRule::MIN_WIDTH    , "VIA12"   );
-  double  via12Space    = tech->rule( SpacingRule::MIN_SPACING  , "VIA12"   );
-  double  nimpSpace     = tech->rule( SpacingRule::MIN_SPACING  , "NIMP"    );
-  double  pimpSpace     = tech->rule( SpacingRule::MIN_SPACING  , "PIMP"    );
-  double  conWidth      = tech->rule( SpacingRule::MIN_WIDTH    , "CONT"    );
-  
+  double  metal1Width   = tech->rule( SpacingRule::MIN_WIDTH    ,
+                                      Layer::METAL1 );
+  double  metal1Space   = tech->rule( SpacingRule::MIN_SPACING  ,
+                                      Layer::METAL1 );
+  double  metal2Width   = tech->rule( SpacingRule::MIN_WIDTH    ,
+                                      Layer::METAL2 );
+  double  metal2Space   = tech->rule( SpacingRule::MIN_SPACING  ,
+                                      Layer::METAL2 );
+  double  via12Width    = tech->rule( SpacingRule::MIN_WIDTH    ,
+                                      Layer::VIA12  );
+  double  via12Space    = tech->rule( SpacingRule::MIN_SPACING  ,
+                                      Layer::VIA12  );
+  double  nimpSpace     = tech->rule( SpacingRule::MIN_SPACING  ,
+                                      Layer::NIMPLANT );
+  double  pimpSpace     = tech->rule( SpacingRule::MIN_SPACING  ,
+                                      Layer::PIMPLANT );
+  double  conWidth      = tech->rule( SpacingRule::MIN_WIDTH    ,
+                                      Layer::CONTACT );
+
   Mos     *pmos         = static_cast<MosNode*>( mosNodes[0] )->model();
   Mos     *nmos         = static_cast<MosNode*>( mosNodes[nmosBias] )
                           ->model();
@@ -514,17 +532,17 @@ bool ICRouting::channelRouting( CircuitModel *model )
                                                         ->center().x() :
                                                         mosNodes[0]
                                                         ->center().x()     ) -
-                          ( via12Width + via12Space ) + model->center().x();
+                          ( via12Width + via12Space );
   double  yBias         = mosNodes[0]->center().y() +
                           pmos->source()[Mos::METAL].bottom() -
-                          metal1Space - metal2Width / 2 + model->center().y();
+                          metal1Space - metal2Width / 2;
   double  mosCrossWidth = max(  pmos->implant().width() + pimpSpace ,
                                 nmos->implant().width() + nimpSpace ) -
                           3 * ( via12Width + via12Space );
 
   for( NetNode *node : nets )
   {
-     vector<Layer>  &netlist    = node->nets();
+     vector<Layer>  &netlist    = node->segments();
      int            netlistSize = netlist.size();
   
      for( int j = 0 ; j < netlistSize ; j++ )
@@ -536,23 +554,23 @@ bool ICRouting::channelRouting( CircuitModel *model )
         double    width;
         bool      connectPmos = netlist[j].center().x() == -1;
         bool      connectNmos = netlist[j].center().y() == track;
-        bool      connectGate = static_cast<int>( netlist[j].width() ) % 3 ==
+        bool      connectGate = static_cast<int>( netlist[j].track() ) % 3 ==
                                 MosNode::G;
         double    xFix        = ( connectPmos ) ? 1 : 0;
         double    yFix        = ( connectNmos ) ? 1 : 0;
 
-        switch( static_cast<int>( netlist[j].height() ) )
+        switch( netlist[j].type() )
         {
-          case 1:
+          case Layer::METAL1:
           
-            height  =   ( netlist[j].center().y() - netlist[j].center().x() -
+            height  =   ( netlist[j].tailPin() - netlist[j].headPin() -
                         xFix - yFix ) * ( metal2Width + metal2Space ) +
                         metal2Width;
             if( height < 0 ) height = 0;
             width   =   metal1Width;
-            x       +=  netlist[j].width() * ( via12Width + via12Space ) +
-                        floor( netlist[j].width() / 3 ) * mosCrossWidth;
-            y       -=  ( netlist[j].center().x() + xFix  ) *
+            x       +=  netlist[j].track() * ( via12Width + via12Space ) +
+                        floor( netlist[j].track() / 3 ) * mosCrossWidth;
+            y       -=  ( netlist[j].headPin() + xFix  ) *
                         ( metal2Width + metal2Space ) +
                         ( height - metal2Width ) / 2;
             layer.setCenterX( x );
@@ -560,40 +578,41 @@ bool ICRouting::channelRouting( CircuitModel *model )
             {
               if( connectGate )
               {
-                layer.setLayer    ( "CONT" );
-                layer.setWidth   ( conWidth  );
-                layer.setHeight  ( conWidth  );
-                layer.setCenterY ( yBias     );
-                netlist.push_back( layer );
-                layer.setCenterY ( mosNodes[nmosBias]->center().y() +
-                                  nmos->source()[Mos::METAL].top() +
-                                  model->center().y() + metal1Space +
-                                  metal2Width / 2 );
-                netlist.push_back( layer );
-                layer.setLayer    ( "METAL1" );
-                layer.setWidth   ( metal1Width );
-                layer.setHeight  ( mosNodes[0]->center().y() +
-                                  pmos->source()[Mos::METAL].bottom() -
-                                  metal1Space -
-                                  ( mosNodes[nmosBias]->center().y() +
-                                  nmos->source()[Mos::METAL].top() +
-                                  metal1Space ) );
-                layer.setCenterY ( mosNodes[0]->center().y() +
-                                  pmos->source()[Mos::METAL].bottom() -
-                                  metal1Space - layer.height() / 2 +
-                                  model->center().y() );
+                layer.setType     ( Layer::CONTACT );
+                layer.setWidth    ( conWidth  );
+                layer.setHeight   ( conWidth  );
+                layer.setCenterY  ( yBias     );
+                netlist.push_back ( layer );
+                layer.setCenterY  ( mosNodes[nmosBias]->center().y() +
+                                    nmos->source()[Mos::METAL].top() +
+                                    model->center().y() + metal1Space +
+                                    metal2Width / 2 );
+                netlist.push_back ( layer );
+                layer.setType     ( Layer::METAL1 );
+                layer.setWidth    ( metal1Width );
+                layer.setHeight   ( mosNodes[0]->center().y() +
+                                    pmos->source()[Mos::METAL].bottom() -
+                                    metal1Space -
+                                    ( mosNodes[nmosBias]->center().y() +
+                                      nmos->source()[Mos::METAL].top() +
+                                      metal1Space ) );
+                layer.setCenterY  ( mosNodes[0]->center().y() +
+                                    pmos->source()[Mos::METAL].bottom() -
+                                    metal1Space - layer.height() / 2 +
+                                    model->center().y() );
               }
               else
               {
-                layer.setLayer( "METAL1" );
-                layer.setWidth   ( metal1Width );
-                layer.setHeight  ( mosNodes[0]->center().y() +
-                                  pmos->source()[Mos::METAL].bottom() -
-                                  mosNodes[nmosBias]->center().y() -
-                                  nmos->source()[Mos::METAL].top() );
-                layer.setCenterY ( mosNodes[0]->center().y() +
-                                  pmos->source()[Mos::METAL].bottom() -
-                                  layer.height() / 2 + model->center().y() );
+                layer.setType     ( Layer::METAL1 );
+                layer.setWidth    ( metal1Width );
+                layer.setHeight   ( mosNodes[0]->center().y() +
+                                    pmos->source()[Mos::METAL].top() -
+                                    mosNodes[nmosBias]->center().y() -
+                                    nmos->source()[Mos::METAL].bottom() );
+                layer.setCenterY  ( mosNodes[0]->center().y() +
+                                    pmos->source()[Mos::METAL].top() -
+                                    layer.height() / 2 +
+                                    model->center().y() );
               }
               netlist.push_back( layer );
               break;
@@ -602,17 +621,18 @@ bool ICRouting::channelRouting( CircuitModel *model )
             {
               if( connectGate )
               {
-                layer.setLayer( "CONT" );
-                layer.setWidth   ( conWidth  );
-                layer.setHeight  ( conWidth  );
-                layer.setCenterY ( yBias     );
+                layer.setType   ( Layer::CONTACT );
+                layer.setWidth  ( conWidth  );
+                layer.setHeight ( conWidth  );
+                layer.setCenterY( yBias     );
               }
               else
               {
-                layer.setLayer( "METAL1" );
-                layer.setWidth   ( metal1Width );
-                layer.setHeight  ( metal1Space );
-                layer.setCenterY ( yBias + metal2Width / 2 +
+                layer.setType   ( Layer::METAL1 );
+                layer.setWidth  ( metal1Width );
+                layer.setHeight ( metal1Space +
+                                  pmos->source()[Mos::METAL].height() );
+                layer.setCenterY( yBias + metal2Width / 2 +
                                   layer.height() / 2 );
               }
               netlist.push_back( layer );
@@ -621,29 +641,28 @@ bool ICRouting::channelRouting( CircuitModel *model )
             {
               if( connectGate )
               {
-                layer.setLayer( "CONT" );
-                layer.setWidth   ( conWidth  );
-                layer.setHeight  ( conWidth  );
-                layer.setCenterY ( mosNodes[nmosBias]->center().y() +
-                                  nmos->source()[Mos::METAL].top() +
-                                  model->center().y() + metal1Space +
-                                  metal2Width / 2 );
-                netlist.push_back( layer );
-                layer.setLayer( "METAL1" );
-                layer.setWidth   ( metal1Width );
-                layer.setHeight  ( metal1Width );
+                layer.setType     ( Layer::CONTACT );
+                layer.setWidth    ( conWidth  );
+                layer.setHeight   ( conWidth  );
+                layer.setCenterY  ( mosNodes[nmosBias]->center().y() +
+                                    nmos->source()[Mos::METAL].top() +
+                                    metal1Space + metal2Width / 2 );
+                netlist.push_back ( layer );
+                layer.setType     ( Layer::METAL1 );
+                layer.setWidth    ( metal1Width );
+                layer.setHeight   ( metal1Width );
               }
               else
               {
-                layer.setLayer( "METAL1" );
-                layer.setWidth   ( metal1Width );
-                layer.setHeight  ( yBias - ( track - 1 ) *
+                layer.setType   ( Layer::METAL1 );
+                layer.setWidth  ( metal1Width );
+                layer.setHeight ( yBias - ( track - 1 ) *
                                   ( metal2Width + metal2Space ) -
                                   metal2Width / 2 -
                                   ( mosNodes[nmosBias]->center().y() +
-                                  nmos->source()[Mos::METAL].top() +
-                                  model->center().y() ) );
-                layer.setCenterY ( yBias - ( track - 1 ) *
+                                  nmos->source()[Mos::METAL].top() ) +
+                                  nmos->source()[Mos::METAL].height() );
+                layer.setCenterY( yBias - ( track - 1 ) *
                                   ( metal2Width + metal2Space ) -
                                   metal2Width / 2 - layer.height() / 2 );
               }
@@ -651,35 +670,36 @@ bool ICRouting::channelRouting( CircuitModel *model )
             }
             break;
           
-          case 2:
+          case Layer::METAL2:
           
             height  =   metal2Width;
-            width   =   ( netlist[j].center().y() - netlist[j].center().x() )
+            width   =   ( netlist[j].tailPin() - netlist[j].headPin() )
                         * ( via12Width + via12Space ) + via12Width +
-                        ( floor( netlist[j].center().y() / 3 ) -
-                          floor( netlist[j].center().x() / 3 ) ) *
+                        ( floor( netlist[j].tailPin() / 3 ) -
+                          floor( netlist[j].headPin() / 3 ) ) *
                           mosCrossWidth;
-            x       +=  netlist[j].center().x() *
+            x       +=  netlist[j].headPin() *
                         ( via12Width + via12Space ) +
                         ( width - via12Width ) / 2 +
-                        floor( netlist[j].center().x() / 3 ) * mosCrossWidth;
-            y       -=  netlist[j].width() * ( metal2Width + metal2Space );
+                        floor( netlist[j].headPin() / 3 ) * mosCrossWidth;
+            y       -=  netlist[j].track() * ( metal2Width + metal2Space );
 
-            layer.setLayer( "VIA12" );
-            layer.setWidth   ( via12Width );
-            layer.setHeight  ( via12Width );
-            layer.setCenterY ( y );
-            layer.setCenterX ( xBias + netlist[j].center().x() *
+            layer.setType     ( Layer::VIA12 );
+            layer.setWidth    ( via12Width );
+            layer.setHeight   ( via12Width );
+            layer.setCenterY  ( y );
+            layer.setCenterX  ( xBias + netlist[j].headPin() *
                               ( via12Width + via12Space ) +
-                              floor( netlist[j].center().x() / 3 ) *
-                              mosCrossWidth );
-            netlist.push_back( layer );
-            layer.setCenterX ( xBias + netlist[j].center().y() *
+                                floor( netlist[j].headPin() / 3 ) *
+                                mosCrossWidth );
+            netlist.push_back ( layer );
+            layer.setCenterX  ( xBias + netlist[j].tailPin() *
                               ( via12Width + via12Space ) +
-                              floor( netlist[j].center().y() / 3 ) *
+                              floor( netlist[j].tailPin() / 3 ) *
                               mosCrossWidth );
             netlist.push_back( layer );
             break;
+          default: break;
         }
         netlist[j].setCenter( x , y   );
         netlist[j].setHeight( height  );

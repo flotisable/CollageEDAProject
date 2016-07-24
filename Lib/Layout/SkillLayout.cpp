@@ -5,16 +5,18 @@ const string SkillLayout::GET_CELLVIEW    = "dbOpenCellViewByType";
 const string SkillLayout::DRAW_RECTANGLE  = "dbCreateRect";
 const string SkillLayout::DRAW_INSTANCE   = "dbCreateInst";
 
-bool SkillLayout::drawRect( const string &layer , double lbX , double lbY ,
-                                                  double rtX , double rtY )
+// SkillLayout public member function
+bool SkillLayout::drawRect( Layer::Type layer , double lbX , double lbY ,
+                                                double rtX , double rtY )
 {
   if( rtY - lbY == 0 || rtX - lbX == 0 ) return false;
 
   return file << DRAW_RECTANGLE << "( "
               << GET_REPRESENT  << "() "
-              << "\"" << layer  << "\" "
-              << "list( "       << lbX  << ":" << lbY << " "
-                                << rtX  << ":" << rtY << " ) )\n";
+              << "\"" << Layer::map( layer )  << "\" "
+              << "list( "
+              << lbX  << ":" << lbY << " "
+              << rtX  << ":" << rtY << " ) )\n";
 }
 
 bool SkillLayout::drawInst( const string &lib , const string &cell ,
@@ -29,3 +31,4 @@ bool SkillLayout::drawInst( const string &lib , const string &cell ,
                                 << " nil "  << x              << ":" << y
                                 << " \"R"   << rotate         << "\" )\n";
 }
+// end SkillLayout public member function

@@ -9,29 +9,29 @@ class Model : public Rectangle
 
     enum Type
     {
-      UNKNOWN = -1,
       MOS,
       CIRCUIT,
-      TYPE_NUM
+      TYPE_NUM,
+      UNKNOWN
     };
 
-    inline Model( Type t = UNKNOWN );
+    inline Model( Type type = UNKNOWN );
 
     inline Type type() const;
 
-    inline void setType( Type t );
+    inline void setType( Type type );
 
   private:
-  
+
     Type mType;
 };
 
 // Model inline member function
-inline Model::Model( Type t ) : mType( t ) {}
+inline Model::Model( Type type ) : mType( type ) {}
 
 inline Model::Type Model::type() const { return mType; }
 
-inline void Model::setType( Type t ) { mType = t; }
+inline void Model::setType( Type type ) { mType = type; }
 // end Model inline member function
 
 #endif

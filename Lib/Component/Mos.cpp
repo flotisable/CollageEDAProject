@@ -8,8 +8,8 @@
 
 Mos::Mos() : mType( UNKNOWN ) , tech( nullptr )
 {
-  diff.setLayer( "DIFF"   );
-  g   .setLayer( "POLY1"  );
+  diff.setType( Layer::DIFFUSION  );
+  g   .setType( Layer::POLY1      );
 }
 
 Mos::Mos( int type , double w , double l , unsigned int m ,
@@ -20,18 +20,18 @@ Mos::Mos( int type , double w , double l , unsigned int m ,
   mL    = l;
   mM    = m;
   tech  = techFile;
-  diff.setLayer( "DIFF"   );
-  g   .setLayer( "POLY1"  );
+  diff.setType( Layer::DIFFUSION  );
+  g   .setType( Layer::POLY1      );
 }
 
 void Mos::generate()
 {
   // set diffusion
-  double conInDiff  = tech->rule( SpacingRule::MIN_ENCLOSURE ,  "DIFF" ,
-                                                                "CONT"  );
-  double conAndPoly = tech->rule( SpacingRule::MIN_SPACING   ,  "CONT" ,
-                                                                "POLY1" );
-  double conWidth   = tech->rule( SpacingRule::MIN_WIDTH     ,  "CONT"  );
+  double conInDiff  = tech->rule( SpacingRule::MIN_ENCLOSURE ,
+                                  Layer::DIFFUSION , Layer::CONTACT );
+  double conAndPoly = tech->rule( SpacingRule::MIN_SPACING ,
+                                  Layer::CONTACT , Layer::POLY1 );
+  double conWidth   = tech->rule( SpacingRule::MIN_WIDTH , Layer::CONTACT  );
 
   diff.setCenter( 0 , 0 );
   diff.setHeight( mW );
@@ -39,8 +39,8 @@ void Mos::generate()
   // end set diffusion
 
   // set gate
-  double diffInPoly = tech->rule( SpacingRule::MIN_ENCLOSURE ,  "POLY1" ,
-                                                                "DIFF"  );
+  double diffInPoly = tech->rule( SpacingRule::MIN_ENCLOSURE ,
+                                  Layer::POLY1 , Layer::DIFFUSION );
   
   g.setCenter ( 0 , 0 );
   g.setHeight ( mW + 2 * diffInPoly );
@@ -48,9 +48,10 @@ void Mos::generate()
   // end set gate
 
   // set metal
-  double  conSpace    = tech->rule( SpacingRule::MIN_SPACING   ,  "CONT"  );
-  double  conInMetal  = tech->rule( SpacingRule::MIN_ENCLOSURE ,  "METAL1" ,
-                                                                  "CONT"  );
+  double  conSpace    = tech->rule( SpacingRule::MIN_SPACING   ,
+                                    Layer::CONTACT );
+  double  conInMetal  = tech->rule( SpacingRule::MIN_ENCLOSURE ,
+                                    Layer::METAL1 , Layer::CONTACT );
 
   int     conNum  = 1 + ( mW - 2 * conInDiff - conWidth ) /
                     ( conWidth + conSpace );
@@ -66,7 +67,7 @@ void Mos::generate()
 
   Layer model;
 
-  model.setLayer  ( "METAL1" );
+  model.setType   ( Layer::METAL1 );
   model.setCenter ( metalX , metalY );
   model.setHeight ( metalH );
   model.setWidth  ( metalW );
@@ -81,7 +82,7 @@ void Mos::generate()
   // set contact
   double  contactY = ( diff.height() - conWidth ) / 2 - conInDiff;
 
-  model.setLayer  ( "CONT" );
+  model.setType   ( Layer::CONTACT );
   model.setHeight ( conWidth );
   model.setWidth  ( conWidth );
 
@@ -92,22 +93,27 @@ void Mos::generate()
      
      contactY -= ( conSpace + conWidth );
   }
+  
+  double  yBias = s[METAL].center().y() - diff.center().y();
+  
+  for( Layer &layer : s ) layer.setCenterY( layer.center().y() - yBias );
+  for( Layer &layer : d ) layer.setCenterY( layer.center().y() - yBias );
   // end set contact
 
   // set implant
-  string impLayer;
+  Layer::Type impLayer;
   
   switch( mType )
   {
-    case NMOS: impLayer = "NIMP"; break;
-    case PMOS: impLayer = "PIMP"; break;
-    default:                      break;
+    case NMOS: impLayer = Layer::NIMPLANT;  break;
+    case PMOS: impLayer = Layer::PIMPLANT;  break;
+    default:                                break;
   }
   
-  double DiffInImp = tech->rule( SpacingRule::MIN_ENCLOSURE , impLayer ,
-                                                              "DIFF" );
+  double DiffInImp = tech->rule(  SpacingRule::MIN_ENCLOSURE ,
+                                  impLayer , Layer::DIFFUSION );
 
-  imp.setLayer  ( impLayer );
+  imp.setType   ( impLayer );
   imp.setCenter ( 0 , 0 );
   imp.setHeight ( diff.height () + 2 * 0.35/*DiffInImp*/ );
   imp.setWidth  ( diff.width  () + 2 * DiffInImp );
@@ -198,6 +204,13 @@ void Mos::writeLayer( ostream &output , const char *name ,
 
 ostream& operator<<( ostream &out , Mos &mos )
 {
+  const double TAB = out.precision();
+
+  out << left;
+  out << mos.type()               << " ";
+  out << setw( TAB )              << mos.w();
+  out << setw( TAB )              << mos.l();
+  out << mos.m()                  << endl;
   out << mos.diffusion()          << endl;
   out << mos.source()[Mos::METAL] << endl;
 

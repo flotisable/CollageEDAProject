@@ -11,7 +11,8 @@ class CircuitModel : public Model , public Circuit
 {
   public:
 
-    inline CircuitModel();
+    inline CircuitModel( TechFile *techFile = nullptr );
+    inline CircuitModel( const string &name , TechFile *techFile = nullptr );
 
     inline const string& name() const;
 
@@ -23,9 +24,12 @@ class CircuitModel : public Model , public Circuit
 };
 
 // CircuitModel inline member function
-inline CircuitModel::CircuitModel() : Model( CIRCUIT ) {}
+inline CircuitModel::CircuitModel( TechFile *techFile )
+: Model( CIRCUIT ) , Circuit( techFile ) {}
+inline CircuitModel::CircuitModel( const string &name , TechFile *techFile )
+: Model( CIRCUIT ) , Circuit( techFile ) , mName( name ) {}
 
-inline const string& CircuitModel::name() const { return mName;   }
+inline const string& CircuitModel::name() const { return mName; }
 
 inline void CircuitModel::setName( const string &name ) { mName = name; }
 // CircuitModel inline member function

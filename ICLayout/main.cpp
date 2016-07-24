@@ -3,6 +3,7 @@
 #ifndef CLASS_TEST
 
 #include <iostream>
+#include <fstream>
 #include <time.h>
 using namespace std;
 
@@ -12,7 +13,6 @@ using namespace std;
 #include "../Lib/Layout/SkillLayout.h"
 #include "ICPlacement.h"
 #include "ICRouting.h"
-#include <fstream>
 
 int main()
 {
@@ -20,15 +20,12 @@ int main()
   double    totalTime = 0;
   fstream   runTime( "runTimeTest.txt" , ios::out );
 
-  //cout.precision( 20 );
-
   for( int i = 1 ; i <= TIMES ; i++ )
   {
-     TechFile     *techFile = new CadenceTechFile;
-     CircuitModel *model;
-     Hspice       hspice( techFile );
-     Layout       *layout   = new SkillLayout;
-     double       start = clock();
+     TechFile *techFile = new CadenceTechFile;
+     Hspice   hspice( techFile );
+     Layout   *layout   = new SkillLayout;
+     double   start     = clock();
 
      hspice.setID( Hspice::VDD   , "VDD"   );
      hspice.setID( Hspice::GND   , "VSS"   );
@@ -39,23 +36,31 @@ int main()
      {
        cout << "Read\n";
 
-       if( techFile->read( "../test.txt" ) )  cout << "Read Tech File\n";
-       else                                   cout << "Tech File Error\n";
-       
-       techFile->write();
+       if( techFile->read( "../test.txt" ) )
+       {
+         cout << "Read Tech File\n";
+         techFile->write();
+       }
+       else
+       {
+         cout << "Tech File Error\n";
+         break;
+       }
 
-       model = hspice.model();
-       model->generate();
+       for( CircuitModel *model : hspice.model() )
+       {
+          model->generate();
 
-       ICPlacement  placer( model , techFile );
-       ICRouting    router( model , techFile );
+          ICPlacement  placer( model , techFile );
+          ICRouting    router( model , techFile );
 
-       placer.placement ();
-       router.routing   ();
+          placer.placement ();
+          router.routing   ();
 
-       layout->setCenter( 0 , 0 );
-       layout->drawCircuit( model );
-       layout->drawRect( "NWELL" , static_cast<Rectangle>( *model ) );
+          layout->setCenter( 0 , 0 );
+          layout->drawCircuit( model );
+          layout->drawRect( Layer::NWELL , *model );
+       }
 
        if( hspice.write() ) cout << "Write\n";
        else                 cout << "Write Error\n";
@@ -63,11 +68,7 @@ int main()
      else
        cout << "Read Error\n";
 
-     double runTime = ( clock() - start ) / CLOCKS_PER_SEC;
-
-     totalTime += runTime;
-
-     //cout << runTime << endl;
+     totalTime += ( clock() - start ) / CLOCKS_PER_SEC;
      
      delete layout;
      delete techFile;

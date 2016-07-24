@@ -1,7 +1,6 @@
 #ifndef LAYOUT_H
 #define LAYOUT_H
 
-#include <string>
 #include <fstream>
 using namespace std;
 
@@ -25,12 +24,11 @@ class Layout
     inline void setCenter( const Point &p       );
     inline void setCenter( double x , double y  );
 
-    inline bool   drawRect( const string &layer , const Rectangle &rect );
-    inline bool   drawRect( const string &layer , const Point &lb ,
-                                                  const Point &rt );
-    virtual bool  drawRect( const string &layer ,
-                            double lbX , double lbY ,
-                            double rtX , double rtY ) = 0;
+    inline  bool  drawRect( Layer::Type layer , const Rectangle &rect );
+    inline  bool  drawRect( Layer::Type layer , const Point &lb ,
+                                                const Point &rt );
+    virtual bool  drawRect( Layer::Type layer , double lbX , double lbY ,
+                                                double rtX , double rtY ) = 0;
 
     inline bool drawLayer( const Layer &layer );
 
@@ -44,6 +42,7 @@ class Layout
     Point   center;
 };
 
+// Layout inline member function
 inline Layout::Layout( const char *fileName )
 { if( fileName ) file.open( fileName , ios::out ); }
 
@@ -59,18 +58,19 @@ inline void Layout::setCenter( const Point &p      )
 inline void Layout::setCenter( double x , double y )
 { center = Point( x , y );  }
 
-inline bool Layout::drawRect( const string &layer , const Rectangle &rect )
+inline bool Layout::drawRect( Layer::Type layer , const Rectangle &rect )
 {
   return drawRect( layer ,  rect.left () , rect.bottom() ,
                             rect.right() , rect.top   () );
 }
 
-inline bool Layout::drawRect( const string &layer , const Point &lb ,
-                                                    const Point &rt )
+inline bool Layout::drawRect( Layer::Type layer , const Point &lb ,
+                                                  const Point &rt )
 { return drawRect( layer , lb.x() , lb.y() , rt.x() , rt.y() ); }
 
 inline bool Layout::drawLayer( const Layer &layer )
-{ return drawRect( layer.layer() ,  layer.left  () , layer.bottom () ,
+{ return drawRect(  layer.type() ,  layer.left  () , layer.bottom () ,
                                     layer.right () , layer.top    () ); }
+// end Layout inline member function
 
 #endif

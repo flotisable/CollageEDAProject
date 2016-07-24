@@ -12,40 +12,50 @@ class TechFile
 {
   public:
 
-    TechFile();
+    inline TechFile();
     virtual ~TechFile() = default;
 
     virtual bool read ( const char *fileName ) = 0;
     bool write( const char *fileName = "techInfo.txt" );
 
     double param( const string &name );
-    double rule ( SpacingRule::Type type ,  string layer1 ,
-                                            string layer2 = string() );
+    double rule ( SpacingRule::Type type , Layer::Type layer1 ,
+                  Layer::Type layer2 = Layer::UNKNOWN );
 
   protected:
 
-    virtual inline bool nullChar( const char data );
+    virtual inline bool isNullChar( char data );
 
     virtual bool findBlock() = 0;
     virtual void catchWord();
 
-    void readTechParam();
-
+    void readTechParam          ();
     void readSpacingRule        ();
     void readOrderedSpacingRule ();
     void readMfgGridResolution  ();
     
-    fstream   file;
-    string    word;
-    string    buffer;
+    fstream file;
+    string  word;
+    string  buffer;
+    
+  private:
 
     vector<TechParam>           techParams;
     vector<vector<SpacingRule>> rules;
     double                      mfgGridResolution;
 };
 
-inline bool TechFile::nullChar( const char data )
+// TechFile inline member function
+inline TechFile::TechFile()
+{
+  Layer::read();
+  SpacingRule::read();
+  rules.resize( SpacingRule::TYPE_NUM );
+}
+
+inline bool TechFile::isNullChar( char data )
 { return  data == ' ' || data == '\t'  || data == '"'; }
+// end TechFile inline member function
 
 #endif
 

@@ -17,12 +17,11 @@ using namespace std;
 
 bool ICPlacement::placement()
 {
-  vector<Model*>  &circuitModels = mModel->circuitModel();
-  bool            success = true;
+  bool success = true;
 
-  for( int i = circuitModels.size() - 1 ; i >= 0  ; i-- )
+  for( Model *circuitModel : mModel->circuitModel() )
   {
-     CircuitModel *model = static_cast<CircuitModel*>( circuitModels[i] );
+     CircuitModel *model = static_cast<CircuitModel*>( circuitModel );
 
      if( model->circuitCell().size() )  success &= circuitPlacement ( model );
      else                               success &= mosPlacement     ( model );
@@ -35,12 +34,6 @@ bool ICPlacement::placement()
 
 bool ICPlacement::mosPlacement( CircuitModel *model )
 {
-  struct MosNodesInfo
-  {
-    int start;
-    int end;
-  };
-
   // calculate cost
   vector<Node*> &mosNodes = model->mosCell();
   int           pmosNum   = 0;
@@ -75,45 +68,9 @@ bool ICPlacement::mosPlacement( CircuitModel *model )
      mosNode->setCost( cost );
   }
   // end calculate cost
-  // sort
-  queue<MosNodesInfo> pipe;
-  MosNodesInfo        init;
 
-  init.start  = 0;
-  init.end    = mosNodes.size() - 1;
-
-  pipe.push( init );
-
-  while( pipe.size() )
-  {
-    MosNodesInfo  info        = pipe.front();
-    int           breakPoint  = info.start;
-    int           pivot       = ( info.start + info.end ) >> 1;
-
-    swap( mosNodes[pivot] , mosNodes[info.end] );
-    pivot = info.end;
-
-    for( int i = info.start ; i < info.end ; i++ )
-       if( mosNodes[i]->cost() > mosNodes[pivot]->cost() )
-       {
-         swap( mosNodes[i] , mosNodes[breakPoint] );
-         breakPoint++;
-       }
-
-    swap( mosNodes[breakPoint] , mosNodes[info.end] );
-
-    MosNodesInfo  backInfo;
-
-    backInfo.start  = breakPoint + 1;
-    backInfo.end    = info.end;
-    info.end        = breakPoint - 1;
-
-    if( info.start      < info.end     ) pipe.push( info     );
-    if( backInfo.start  < backInfo.end ) pipe.push( backInfo );
-
-    pipe.pop();
-  }
-  // end sort
+  sort( mosNodes.begin() , mosNodes.end() ,
+        static_cast<bool (*)( Node* , Node* )>( Node::costCompare ) );
 
   // calculate cost
   for( unsigned int i = 0 ; i < mosNodes.size() ; i++ )
@@ -192,12 +149,16 @@ bool ICPlacement::mosPlacement( CircuitModel *model )
   if( !tech ) return false;
 
   // detail placement
-  double  metal2Width = tech->rule( SpacingRule::MIN_WIDTH   ,  "METAL2" );
-  double  metal2Space = tech->rule( SpacingRule::MIN_SPACING ,  "METAL2" );
-  double  nimpSpace   = tech->rule( SpacingRule::MIN_SPACING ,  "NIMP"   );
-  double  pimpSpace   = tech->rule( SpacingRule::MIN_SPACING ,  "PIMP"   );
-  double  conAndDiff  = tech->rule( SpacingRule::MIN_SPACING ,  "CONT" ,
-                                                                "DIFF" );
+  double  metal2Width = tech->rule( SpacingRule::MIN_WIDTH   ,
+                                    Layer::METAL2 );
+  double  metal2Space = tech->rule( SpacingRule::MIN_SPACING ,
+                                    Layer::METAL2 );
+  double  nimpSpace   = tech->rule( SpacingRule::MIN_SPACING ,
+                                    Layer::NIMPLANT );
+  double  pimpSpace   = tech->rule( SpacingRule::MIN_SPACING ,
+                                    Layer::PIMPLANT );
+  double  conAndDiff  = tech->rule( SpacingRule::MIN_SPACING ,
+                                    Layer::CONTACT , Layer::DIFFUSION );
   Mos     *pmos       = static_cast<MosNode*>( mosNodes[0]        )->model();
   Mos     *nmos       = static_cast<MosNode*>( mosNodes[pmosNum]  )->model();
   double  mosWidth    = max(  pmos->implant().width() + pimpSpace ,
@@ -213,9 +174,7 @@ bool ICPlacement::mosPlacement( CircuitModel *model )
   double  width       = max(  pmosNum , static_cast<int>( mosNodes.size() -
                               pmosNum ) ) * mosWidth + 2 * channel;
   double  xbias       = ( pmosNum & 1 ) ? 0 : -mosWidth / 2 ;
-  double  ybias       = ( height - pimpSpace - pmos->implant().height() )
-                        / 2;
-  
+  double  ybias       = ( height - pimpSpace - pmos->implant().height() ) / 2;
 
   for( Node *mosNode : mosNodes )
   {
@@ -224,11 +183,11 @@ bool ICPlacement::mosPlacement( CircuitModel *model )
 
      mosNode->setCenter( x , y );
   }
-  
+
   model->setHeight( height  );
   model->setWidth ( width   );
   // end detail placement
-  
+
   return true;
 }
 
@@ -286,22 +245,22 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
   int           VISIT = circuitNodes[0]->visit() + 1;
   int           xMin  = 0;
   int           yMin  = 0;
-  
+
   circuitNodes[0]->setCenter( 0 , 0 );
   circuitNodes[0]->setVisit ( VISIT );
-  
+
   placeQueue.push( circuitNodes[0] );
-  
+
   while( placeQueue.size() )
   {
     Node          *node   = placeQueue.front();
     int           layer   = 1;
     int           direct  = 0;
-    
+
     for( Node *netNode : node->connect() )
     {
        vector<Node*> &subckt = netNode->connect();
-    
+
        if( !is_sorted(  subckt.begin() , subckt.end() ,
                         static_cast<bool (*)( Node* , Node* )>
                         ( Node::costCompare ) ) )
@@ -314,7 +273,7 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
           {
             subcktNode->setVisit( VISIT );
             placeQueue.push( subcktNode );
-            
+
             do
             {
               int x = node->center().x();
@@ -394,7 +353,6 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
      node->setCenter( x , y );
      y++;
   }
-  
   // end rough placement
 
   // detial placement
@@ -422,12 +380,12 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
      double       localXr;
      double       halfH   = node->height()  / 2;
      double       halfW   = node->width ()  / 2;
-     
+
      if( node->center().x() == xMin )  localX = localXr = 0;
-     
+
      localY   =   0;
      localXr  +=  node->width();
-  
+
      for( unsigned int j = 0 ; j < contour.size() ; j++ )
      {
         if( front == -1 )
@@ -460,7 +418,7 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
      localX += halfW;
      if( localY > yMax ) yMax = localY;
      if( localX > xMax ) xMax = localX;
-     
+
      contour.erase  ( contour.begin() + front , contour.begin() + end );
      contour.insert ( contour.begin() + front ,
      {  Point( node->left () , node->top    () ) ,
@@ -472,13 +430,12 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
   double  width  = xMax;
   Point   bias( - width / 2 , - height / 2 );
   
-  for( Node *node : circuitNodes )
-     node->setCenter( bias + node->center() );
+  for( Node *node : circuitNodes ) node->setCenter( bias + node->center() );
 
   model->setCenter( 0 , 0   );
   model->setHeight( height  );
   model->setWidth ( width   );
   // end detial placement
-  
+
   return true;
 }

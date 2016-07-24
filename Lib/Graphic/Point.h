@@ -3,7 +3,7 @@
 
 #include <ostream>
 
-class Point // 點
+class Point // 二維點座標
 {
   public:
 
@@ -26,8 +26,8 @@ class Point // 點
 
   private:
 
-    double mX; // x座標
-    double mY; // y座標
+    double mX;
+    double mY;
 };
 
 // Point non-member function
@@ -42,16 +42,15 @@ inline double Point::y() const { return mY; }
 
 inline void Point::setX( double x )                   { mX = x; }
 inline void Point::setY( double y )                   { mY = y; }
-inline void Point::set ( double x , const double y )  { mX = x;
-                                                        mY = y; }
+inline void Point::set ( double x , const double y )  { mX = x; mY = y; }
 
 inline Point Point::operator+( const Point &p ) const
 { return Point( mX + p.x() , mY + p.y() ); }
 inline Point Point::operator-( const Point &p ) const
 { return Point( mX - p.x() , mY - p.y() ); }
-inline Point& Point::operator+= ( const Point &p )
+inline Point& Point::operator+=( const Point &p )
 { return *this = *this + p; }
-inline Point& Point::operator-= ( const Point &p )
+inline Point& Point::operator-=( const Point &p )
 { return *this = *this - p; }
 
 inline bool Point::operator==( const Point &p ) const

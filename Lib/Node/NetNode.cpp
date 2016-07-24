@@ -2,9 +2,10 @@
 
 #include <iomanip>
 
+// NetNode non-member function
 ostream& operator<<( ostream &out , NetNode &node )
 {
-  static const int TAB = 10;
+  const int TAB = 10;
 
   out << left;
   out << setw( TAB )  << node.name();
@@ -13,8 +14,9 @@ ostream& operator<<( ostream &out , NetNode &node )
   for( Node *nodeConnect : node.connect() )
      out << setw( TAB ) << nodeConnect->name();
 
-  for( auto &net : node.nets() )
-     out << static_cast<Rectangle>( net ) << " ";
+  for( auto &segment : node.segments() )
+     out << static_cast<Rectangle>( segment ) << " ";
 
   return out;
 }
+// end NetNode non-member function

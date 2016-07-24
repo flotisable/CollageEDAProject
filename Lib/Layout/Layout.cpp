@@ -9,6 +9,7 @@
 #include "../Node/CircuitNode.h"
 #include "../Node/NetNode.h"
 
+// Layout public member function
 bool Layout::drawMos( Mos *mos )
 {
   bool  success = true;
@@ -57,8 +58,7 @@ bool Layout::drawCircuit( Circuit *circuit )
   {
      CircuitNode *node = static_cast<CircuitNode*>( circuitNode );
 
-     success  &= drawRect(  "NWELL" ,
-                            static_cast<Rectangle>( *node ) + center );
+     success  &= drawRect( Layer::NWELL , *node + center );
 
      center   += node->center ();
      success  &= drawCircuit  ( static_cast<CircuitModel*>( node->model() ) );
@@ -66,12 +66,13 @@ bool Layout::drawCircuit( Circuit *circuit )
   }
 
   for( Node *node : circuit->io() )
-     for( Layer &layer : static_cast<NetNode*>( node )->nets() )
-        success &= drawLayer( layer + center );
+     for( Layer &segment : static_cast<NetNode*>( node )->segments() )
+        success &= drawLayer( segment + center );
 
   for( Node *node : circuit->net() )
-     for( Layer &layer : static_cast<NetNode*>( node )->nets() )
-        success &= drawLayer( layer + center );
+     for( Layer &segment : static_cast<NetNode*>( node )->segments() )
+        success &= drawLayer( segment + center );
 
   return success;
 }
+// end Layout public member function

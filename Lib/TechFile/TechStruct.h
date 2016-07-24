@@ -5,6 +5,8 @@
 #include <ostream>
 using namespace std;
 
+#include "../Component/Layer.h"
+
 // controls
 
 struct TechParam
@@ -21,7 +23,6 @@ struct SpacingRule
 {
   enum Type
   {
-    UNKNOWN = -1,
     MIN_WIDTH,
     MIN_SPACING,
     MIN_AREA,
@@ -31,25 +32,41 @@ struct SpacingRule
     MAX_WIDTH,
     MIN_OVERLAP,
     TYPE_NUM,
+    UNKNOWN
   };
 
-  static const string TYPES[TYPE_NUM];
+  static inline void setTypesName( Type type , const string &name );
 
-  Type    type;
-  string  layer1;
-  string  layer2; // optional
-  double  value;
+  static bool read  ( const char *fileName = "spacingRuleTypes.txt" );
+  static bool write ( const char *fileName = "spacingRuleTypes.txt" );
 
-  static Type                map( const string &type );
-  static inline const string map( Type         type  );
+  static Type           map( const string &type );
+  static inline string  map( Type         type  );
+
+  Type        type;
+  Layer::Type layer1;
+  Layer::Type layer2; // optional
+  double      value;
+  
+  private:
+  
+    static string TYPES[TYPE_NUM];
 };
 
-inline const string SpacingRule::map( Type type  )
+inline void SpacingRule::setTypesName( Type type , const string &name )
+{
+  if( type == UNKNOWN ) return;
+  else                  TYPES[type] = name;
+}
+
+inline string SpacingRule::map( Type type  )
 { return ( type == UNKNOWN ) ? "unknown" : TYPES[type]; }
 
 // end physical rules
 
-ostream& operator<<( ostream &out , TechParam   &parameter );
-ostream& operator<<( ostream &out , SpacingRule &rule );
+// non-member function
+ostream& operator<<( ostream &out , const TechParam   &parameter  );
+ostream& operator<<( ostream &out , const SpacingRule &rule       );
+// end non-member function
 
 #endif

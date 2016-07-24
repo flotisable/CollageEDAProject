@@ -53,7 +53,7 @@ class Hspice
     Hspice( TechFile *techFile = nullptr );
     ~Hspice();
 
-    inline CircuitModel* model() const;
+    inline vector<CircuitModel*>& model();
 
     inline void setTechFile( TechFile *techFile );
     
@@ -80,7 +80,6 @@ class Hspice
 
     static const string SUBCKT_HEAD_KEYWORD;
     static const string SUBCKT_TAIL_KEYWORD;
-    static const int    MAIN;
 
     TechFile              *tech;
     vector<CircuitModel*> models;
@@ -91,8 +90,8 @@ class Hspice
     vector<string>  id;
 };
 
-inline CircuitModel* Hspice::model() const
-{ return models[MAIN]; }
+inline vector<CircuitModel*>& Hspice::model()
+{ return models; }
 
 inline void Hspice::setTechFile( TechFile *techFile )
 { tech = techFile; }

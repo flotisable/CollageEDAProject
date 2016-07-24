@@ -1,8 +1,7 @@
 #include "CadenceTechFile.h"
 #include <limits>
 
-// public members
-
+// Cadence public member function
 bool CadenceTechFile::read( const char *fileName )
 {
   file.open( fileName , ios::in );
@@ -11,13 +10,13 @@ bool CadenceTechFile::read( const char *fileName )
   {
     switch( buffer[0] )
     {
-      case ';':
-      case ')':
+      case ';': // comment
+      case ')': // end of block
 
         file.ignore( numeric_limits<streamsize>::max() , '\n' );
         continue;
 
-      case '(':
+      case '(': // start of block
 
         int   layer = 1;
         char  c;
@@ -31,14 +30,13 @@ bool CadenceTechFile::read( const char *fileName )
           }
           if( layer == 0 ) break;
         }
-
         if( layer ) return false;
     }
 
     if( !findBlock() ) return false;
 
-    readInfo( "techParams"          , &CadenceTechFile::readTechParam          );
-    readInfo( "spacingRules"        , &CadenceTechFile::readSpacingRule        );
+    readInfo( "techParams"          , &CadenceTechFile::readTechParam   );
+    readInfo( "spacingRules"        , &CadenceTechFile::readSpacingRule );
     readInfo( "orderedSpacingRules" ,
               &CadenceTechFile::readOrderedSpacingRule );
     readInfo( "mfgGridResolution"   ,
@@ -48,24 +46,21 @@ bool CadenceTechFile::read( const char *fileName )
   file.close();
   return true;
 }
+// end Cadence public member function
 
-// end public members
-
-// private members
-
+// Cadence private member function
 bool CadenceTechFile::findBlock()
 {
   unsigned int  startIndex = buffer.find( "(" );
-  char          c;
 
-  buffer.erase( startIndex );
-  word = buffer;
+  word = buffer.erase( startIndex );
 
   if( startIndex == string::npos )
   {
+    char c;
+
     while( file >> c )
-      if( c == '(' )
-        return true;
+      if( c == '(' ) return true;
     return false;
   }
   return true;
@@ -73,12 +68,12 @@ bool CadenceTechFile::findBlock()
 
 void CadenceTechFile::catchWord()
 {
-  for( register unsigned int i = 0 ; i < buffer.length() ; i++ )
+  for( unsigned int i = 0 ; i < buffer.length() ; i++ )
   {
-     if( nullChar( buffer[i] ) ) continue;
+     if( isNullChar( buffer[i] ) ) continue;
 
-     for( register unsigned int j = i ; j < buffer.length() ; j++ )
-        if( nullChar( buffer[j] ) )
+     for( unsigned int j = i ; j < buffer.length() ; j++ )
+        if( isNullChar( buffer[j] ) )
         {
           word = buffer.substr( i , j - i );
           buffer.erase( 0 , j + 1 );
@@ -124,5 +119,4 @@ void CadenceTechFile::readInfo( const string &id ,
         case ')': return;
       }
 }
-
-// end private members
+// end Cadence private member function
