@@ -11,8 +11,8 @@ using namespace std;
 #include "../Lib/Model/CircuitModel.h"
 #include "../Lib/TechFile/CadenceTechFile.h"
 #include "../Lib/Layout/SkillLayout.h"
-#include "ICPlacement.h"
-#include "ICRouting.h"
+#include "../Lib/EDA/ICPlacement.h"
+#include "../Lib/EDA/ICRouting.h"
 
 int main()
 {
@@ -22,10 +22,12 @@ int main()
 
   for( int i = 1 ; i <= TIMES ; i++ )
   {
-     TechFile *techFile = new CadenceTechFile;
-     Hspice   hspice( techFile );
-     Layout   *layout   = new SkillLayout;
-     double   start     = clock();
+     TechFile     *techFile = new CadenceTechFile;
+     Hspice       hspice( techFile );
+     Layout       *layout   = new SkillLayout;
+     ICPlacement  placer;
+     ICRouting    router;
+     double       start     = clock();
 
      hspice.setID( Hspice::VDD   , "VDD"   );
      hspice.setID( Hspice::GND   , "VSS"   );
@@ -49,13 +51,10 @@ int main()
 
        for( CircuitModel *model : hspice.model() )
        {
-          model->generate();
-
-          ICPlacement  placer( model , techFile );
-          ICRouting    router( model , techFile );
-
-          placer.placement ();
-          router.routing   ();
+          model->setPlacement ( &placer );
+          model->setRouting   ( &router );
+          model->generate ();
+          model->layout   ();
 
           layout->setCenter( 0 , 0 );
           layout->drawCircuit( model );

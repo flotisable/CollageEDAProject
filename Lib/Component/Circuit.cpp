@@ -4,12 +4,6 @@
 #include "../Model/MosModel.h"
 #include "../Model/CircuitModel.h"
 
-Circuit::Circuit( TechFile *techFile ) : tech( techFile ) , main( true )
-{
-  nodes .resize( Node ::TYPE_NUM );
-  models.resize( Model::TYPE_NUM );
-}
-
 Circuit::~Circuit()
 {
 	for( vector<Node*> &nodeVector : nodes )
