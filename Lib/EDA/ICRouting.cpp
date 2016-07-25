@@ -7,31 +7,20 @@
 #include <fstream>
 using namespace std;
 
-#include "../Lib/Model/CircuitModel.h"
-#include "../Lib/Model/MosModel.h"
-#include "../Lib/Node/MosNode.h"
-#include "../Lib/Node/NetNode.h"
-#include "../Lib/Component/Circuit.h"
-#include "../Lib/Component/Mos.h"
-#include "../Lib/Component/Layer.h"
-#include "../Lib/Graphic/Rectangle.h"
-#include "../Lib/TechFile/TechFile.h"
+#include "../Model/CircuitModel.h"
+#include "../Model/MosModel.h"
+#include "../Node/MosNode.h"
+#include "../Node/NetNode.h"
+#include "../Component/Circuit.h"
+#include "../Component/Mos.h"
+#include "../Component/Layer.h"
+#include "../Graphic/Rectangle.h"
+#include "../TechFile/TechFile.h"
 
-bool ICRouting::routing()
+bool ICRouting::routing( CircuitModel *model )
 {
-  bool success = true;
-
-  for( Model *circuitModel : mModel->circuitModel() )
-  {
-     CircuitModel* model = static_cast<CircuitModel*>( circuitModel );
-
-     if( model->circuitCell().size() )  success &= gridRouting    ( model );
-     else                               success &= channelRouting ( model );
-     
-     if( !success ) return false;
-  }
-
-  return success &= gridRouting( mModel );
+  if( model->circuitCell().size() ) return gridRouting    ( model );
+  else                              return channelRouting ( model );
 }
 
 bool ICRouting::channelRouting( CircuitModel *model )

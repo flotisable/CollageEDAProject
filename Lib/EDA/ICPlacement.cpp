@@ -6,30 +6,19 @@
 #include <float.h>
 using namespace std;
 
-#include "../Lib/Model/CircuitModel.h"
-#include "../Lib/Model/MosModel.h"
-#include "../Lib/Component/Circuit.h"
-#include "../Lib/Component/Mos.h"
-#include "../Lib/Node/CircuitNode.h"
-#include "../Lib/Node/MosNode.h"
-#include "../Lib/Node/NetNode.h"
-#include "../Lib/TechFile/TechFile.h"
+#include "../Model/CircuitModel.h"
+#include "../Model/MosModel.h"
+#include "../Component/Circuit.h"
+#include "../Component/Mos.h"
+#include "../Node/CircuitNode.h"
+#include "../Node/MosNode.h"
+#include "../Node/NetNode.h"
+#include "../TechFile/TechFile.h"
 
-bool ICPlacement::placement()
+bool ICPlacement::placement( CircuitModel *model )
 {
-  bool success = true;
-
-  for( Model *circuitModel : mModel->circuitModel() )
-  {
-     CircuitModel *model = static_cast<CircuitModel*>( circuitModel );
-
-     if( model->circuitCell().size() )  success &= circuitPlacement ( model );
-     else                               success &= mosPlacement     ( model );
-
-     if( !success ) return false;
-  }
-
-  return success &= circuitPlacement( mModel );
+  if( model->circuitCell().size() ) return circuitPlacement ( model );
+  else                              return mosPlacement     ( model );
 }
 
 bool ICPlacement::mosPlacement( CircuitModel *model )
