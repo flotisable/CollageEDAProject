@@ -6,18 +6,13 @@
 using namespace std;
 
 #include "Layer.h"
+#include "ViaDevice.h"
 
 class TechFile;
 
 class Mos
 {
   public:
-
-    enum Device
-    {
-      METAL,
-      CONTACT
-    };
 
     enum Type
     {
@@ -26,11 +21,11 @@ class Mos
       PMOS
     };
 
-    Mos();
-    Mos(  int type , double w , double l , unsigned int m ,
-          TechFile *techFile = nullptr );
+    Mos(  Type type = UNKNOWN , TechFile *techFile = nullptr );
+    inline Mos( Type type , double w , double l , unsigned int m ,
+                TechFile *techFile = nullptr );
 
-    inline int          type() const;
+    inline Type         type() const;
     inline double       w   () const;
     inline double       l   () const;
     inline unsigned int m   () const;
@@ -45,27 +40,27 @@ class Mos
     void generate ();
     bool write    ( const char *fileName = "mosInfo.txt"  );
     bool read     ( const char *fileName = "mosInput.txt" );
-    
-    inline const Layer&         diffusion () const;
-    inline const vector<Layer>& source    () const;
-    inline const Layer&         gate      () const;
-    inline const vector<Layer>& drain     () const;
-    inline const Layer&         implant   () const;
+
+    inline const Layer&     diffusion () const;
+    inline const ViaDevice& source    () const;
+    inline const Layer&     gate      () const;
+    inline const ViaDevice& drain     () const;
+    inline const Layer&     implant   () const;
 
     inline bool operator==( const Mos &mos );
 
   private:
 
-    int           mType;
+    Type          mType;
     double        mW;
     double        mL;
     unsigned int  mM;
     
-    Layer         diff;
-    vector<Layer> s;
-    Layer         g;
-    vector<Layer> d;
-    Layer         imp;
+    Layer     diff;
+    ViaDevice s;
+    Layer     g;
+    ViaDevice d;
+    Layer     imp;
     
     TechFile *tech;
     
@@ -78,7 +73,15 @@ ostream& operator<<( ostream &out , Mos &mos );
 // end Mos non-memeber function
 
 // Mos inline member function
-inline int          Mos::type() const { return mType; }
+inline Mos::Mos(  Type type , double w , double l , unsigned int m ,
+                  TechFile *techFile ) : Mos( type , techFile )
+{
+  mW = w;
+  mL = l;
+  mM = m;
+}
+
+inline Mos::Type    Mos::type() const { return mType; }
 inline double       Mos::w   () const { return mW;    }
 inline double       Mos::l   () const { return mL;    }
 inline unsigned int Mos::m   () const { return mM;    }
@@ -90,11 +93,11 @@ inline void Mos::setM   ( unsigned int  m ) { mM     = m; }
 
 inline void Mos::setTechFile( TechFile *techFile ) { tech = techFile; }
 
-inline const Layer&         Mos::diffusion() const { return diff; }
-inline const vector<Layer>& Mos::source   () const { return s   ; }
-inline const Layer&         Mos::gate     () const { return g   ; }
-inline const vector<Layer>& Mos::drain    () const { return d   ; }
-inline const Layer&         Mos::implant  () const { return imp ; }
+inline const Layer&     Mos::diffusion() const { return diff; }
+inline const ViaDevice& Mos::source   () const { return s   ; }
+inline const Layer&     Mos::gate     () const { return g   ; }
+inline const ViaDevice& Mos::drain    () const { return d   ; }
+inline const Layer&     Mos::implant  () const { return imp ; }
 
 inline bool Mos::operator==( const Mos &mos )
 {

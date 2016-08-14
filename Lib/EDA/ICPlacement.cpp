@@ -23,9 +23,36 @@ bool ICPlacement::placement( CircuitModel *model )
 
 bool ICPlacement::mosPlacement( CircuitModel *model )
 {
+  circuitModel = model;
+  
+  mosCost ();
+  mosRough();
+
+  if( !tech ) return false;
+
+  mosDetail();
+
+  return true;
+}
+
+bool ICPlacement::circuitPlacement( CircuitModel *model )
+{
+  circuitModel = model;
+  
+  circuitCost   ();
+  circuitRough  ();
+  circuitDetail ();
+
+  return true;
+}
+
+
+void ICPlacement::mosCost()
+{
   // calculate cost
-  vector<Node*> &mosNodes = model->mosCell();
-  int           pmosNum   = 0;
+  vector<Node*> &mosNodes = circuitModel->mosCell();
+
+  pmosNum = 0;
 
   for( Node *mosNode : mosNodes )
   {
@@ -57,7 +84,7 @@ bool ICPlacement::mosPlacement( CircuitModel *model )
      mosNode->setCost( cost );
   }
   // end calculate cost
-
+  
   sort( mosNodes.begin() , mosNodes.end() ,
         static_cast<bool (*)( Node* , Node* )>( Node::costCompare ) );
 
@@ -65,6 +92,11 @@ bool ICPlacement::mosPlacement( CircuitModel *model )
   for( unsigned int i = 0 ; i < mosNodes.size() ; i++ )
      mosNodes[i]->setCost( mosNodes.size() - i );
   // end calculate cost
+}
+
+void ICPlacement::mosRough()
+{
+  vector<Node*> &mosNodes = circuitModel->mosCell();
 
   // rough placement
   queue<Node*>  placeQueue;
@@ -134,8 +166,11 @@ bool ICPlacement::mosPlacement( CircuitModel *model )
     placeQueue.pop();
   }
   // end rough placement
+}
 
-  if( !tech ) return false;
+void ICPlacement::mosDetail()
+{
+  vector<Node*> &mosNodes = circuitModel->mosCell();
 
   // detail placement
   double  metal2Width = tech->rule( SpacingRule::MIN_WIDTH   ,
@@ -152,7 +187,8 @@ bool ICPlacement::mosPlacement( CircuitModel *model )
   Mos     *nmos       = static_cast<MosNode*>( mosNodes[pmosNum]  )->model();
   double  mosWidth    = max(  pmos->implant().width() + pimpSpace ,
                               nmos->implant().width() + nimpSpace );
-  double  channel     = ( model->ioNum() - 2 + model->netNum() + 1 ) *
+  double  channel     = ( circuitModel->ioNum() - 2 +
+                          circuitModel->netNum() + 1 ) *
                         ( metal2Width + metal2Space ) - metal2Space;
   double  p2n         = channel + 2 * conAndDiff +
                         ( pmos->diffusion().height() +
@@ -173,14 +209,49 @@ bool ICPlacement::mosPlacement( CircuitModel *model )
      mosNode->setCenter( x , y );
   }
 
-  model->setHeight( height  );
-  model->setWidth ( width   );
+  circuitModel->setHeight( height  );
+  circuitModel->setWidth ( width   );
   // end detail placement
-
-  return true;
 }
 
-bool ICPlacement::circuitPlacement( CircuitModel *model )
+
+void ICPlacement::circuitCost()
+{
+  vector<Node*> &circuitNodes = circuitModel->circuitCell();
+
+  // caculate cost
+  for( Node *node : circuitNodes )
+  {
+     vector<Node*>  &nets     = node->connect();
+     CircuitModel   *circuit  = static_cast<CircuitNode*>( node )->model();
+     int            cost      = 0;
+
+     node->setHeight( circuit->height ()  );
+     node->setWidth ( circuit->width  ()  );
+
+     for( unsigned int j = 0 ; j < nets.size() ; j++ )
+     {
+        if( nets[j]->type() == Node::VDD || nets[j]->type() == Node::VSS )
+          continue;
+
+        cost += nets[j]->connect().size() - 1;
+
+        for( unsigned int k = 0 ; k < j ; k++ )
+           if( nets[j]->name() == nets[k]->name() )
+           {
+             cost -= nets[j]->connect().size() - 1;
+             break;
+           }
+     }
+     node->setCost( cost );
+  }
+  
+  sort( circuitNodes.begin() , circuitNodes.end() ,
+        static_cast<bool (*)( Node* , Node* )>( Node::costCompare ) );
+  // end caculate cost
+}
+
+void ICPlacement::circuitRough()
 {
   enum Direct
   {
@@ -195,45 +266,15 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
     MAX_DIRECT
   };
 
-  vector<Node*> &circuitNodes = model->circuitCell();
-
-  // caculate cost
-  for( Node *node : circuitNodes )
-  {
-     vector<Node*>  &nets     = node->connect();
-     CircuitModel   *circuit  = static_cast<CircuitNode*>( node )->model();
-     int            cost      = 0;
-  
-     node->setHeight( circuit->height ()  );
-     node->setWidth ( circuit->width  ()  );
-     
-     for( unsigned int j = 0 ; j < nets.size() ; j++ )
-     {
-        if( nets[j]->type() == Node::VDD || nets[j]->type() == Node::VSS )
-          continue;
-
-        cost += nets[j]->connect().size() - 1;
-        
-        for( unsigned int k = 0 ; k < j ; k++ )
-           if( nets[j]->name() == nets[k]->name() )
-           {
-             cost -= nets[j]->connect().size() - 1;
-             break;
-           }
-     }
-     node->setCost( cost );
-  }
-  // end caculate cost
-  
-  sort( circuitNodes.begin() , circuitNodes.end() ,
-        static_cast<bool (*)( Node* , Node* )>( Node::costCompare ) );
+  vector<Node*> &circuitNodes = circuitModel->circuitCell();
 
   // rough placement
   vector<Point> plane;
   queue<Node*>  placeQueue;
   int           VISIT = circuitNodes[0]->visit() + 1;
-  int           xMin  = 0;
   int           yMin  = 0;
+
+  xMin  = 0;
 
   circuitNodes[0]->setCenter( 0 , 0 );
   circuitNodes[0]->setVisit ( VISIT );
@@ -267,7 +308,7 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
             {
               int x = node->center().x();
               int y = node->center().y();
-            
+
               if( RIGHT_TOP <= direct || direct <= RIGHT_BOTTOM )
               {
                 x += layer;
@@ -294,17 +335,17 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
                 direct = RIGHT;
                 layer++;
               }
-              
+
             }while( find( plane.begin () ,
                           plane.end   () ,
                           subcktNode->center() ) != plane.end() );
-            
+
             plane.push_back( subcktNode->center() );
           }
     }
     placeQueue.pop();
   }
-  
+
   sort( circuitNodes.begin() , circuitNodes.end() ,
         []( Node *front , Node *back )
         { return (  front->center().y() < back->center().y() ||
@@ -343,6 +384,11 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
      y++;
   }
   // end rough placement
+}
+
+void ICPlacement::circuitDetail()
+{
+  vector<Node*> &circuitNodes = circuitModel->circuitCell();
 
   // detial placement
   double xMax   = 0;
@@ -355,9 +401,7 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
         { return (  front->center().y() < back->center().y() ||
                     front->center().x() < back->center().x() ); } );
 
-  plane.clear();
-
-  vector<Point> &contour = plane;
+  vector<Point> contour;
 
   contour.push_back( Point( 0       , 0 ) );
   contour.push_back( Point( DBL_MAX , 0 ) );
@@ -418,13 +462,10 @@ bool ICPlacement::circuitPlacement( CircuitModel *model )
   double  height = yMax;
   double  width  = xMax;
   Point   bias( - width / 2 , - height / 2 );
-  
+
   for( Node *node : circuitNodes ) node->setCenter( bias + node->center() );
 
-  model->setCenter( 0 , 0   );
-  model->setHeight( height  );
-  model->setWidth ( width   );
+  circuitModel->setHeight( height  );
+  circuitModel->setWidth ( width   );
   // end detial placement
-
-  return true;
 }

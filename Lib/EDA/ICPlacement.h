@@ -17,9 +17,22 @@ class ICPlacement
   private:
 
     TechFile *tech;
+    
+    CircuitModel  *circuitModel;
+    int           pmosNum;
+    
+    int           xMin;
 
     bool mosPlacement     ( CircuitModel *model );
     bool circuitPlacement ( CircuitModel *model );
+    
+    void mosCost  ();
+    void mosRough ();
+    void mosDetail();
+    
+    void circuitCost  ();
+    void circuitRough ();
+    void circuitDetail();
 };
 
 inline ICPlacement::ICPlacement( TechFile *techFile ) : tech( techFile ) {}

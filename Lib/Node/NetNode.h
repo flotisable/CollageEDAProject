@@ -7,6 +7,7 @@ using namespace std;
 
 #include "Node.h"
 #include "../Component/Layer.h"
+#include "../Component/ViaDevice.h"
 
 class NetNode : public Node
 {
@@ -15,11 +16,13 @@ class NetNode : public Node
     inline NetNode();
     inline NetNode( const string &name );
 
-    inline vector<Layer>& segments();
+    inline vector<Layer>&     segments();
+    inline vector<ViaDevice>& contacts();
 
   private:
 
-    vector<Layer> mSegments;
+    vector<Layer>     mSegments;
+    vector<ViaDevice> mContacts;
 };
 
 // NetNode non-member function
@@ -30,7 +33,8 @@ ostream& operator<<( ostream &out , NetNode &node );
 inline NetNode::NetNode() : Node( NET ) {}
 inline NetNode::NetNode( const string &name ) : Node( name , NET ) {}
 
-inline vector<Layer>& NetNode::segments() { return mSegments; }
+inline vector<Layer>&     NetNode::segments() { return mSegments; }
+inline vector<ViaDevice>& NetNode::contacts() { return mContacts; }
 // end NetNode inline member function
 
 #endif

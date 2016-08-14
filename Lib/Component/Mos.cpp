@@ -6,26 +6,22 @@
 
 #include "../TechFile/TechFile.h"
 
-Mos::Mos() : mType( UNKNOWN ) , tech( nullptr )
+Mos::Mos( Type type , TechFile *techFile ) : mType( type ) , tech( techFile )
 {
   diff.setType( Layer::DIFFUSION  );
   g   .setType( Layer::POLY1      );
-}
-
-Mos::Mos( int type , double w , double l , unsigned int m ,
-          TechFile *techFile )
-{
-  mType = type;
-  mW    = w;
-  mL    = l;
-  mM    = m;
-  tech  = techFile;
-  diff.setType( Layer::DIFFUSION  );
-  g   .setType( Layer::POLY1      );
+  
+  s.setViaLayer   ( Layer::CONTACT );
+  s.setColumn     ( 1 );
+  s.setLowerLayer ( Layer::DIFFUSION );
+  
+  d = s;
 }
 
 void Mos::generate()
 {
+  if( !tech ) return;
+
   // set diffusion
   double conInDiff  = tech->rule( SpacingRule::MIN_ENCLOSURE ,
                                   Layer::DIFFUSION , Layer::CONTACT );
@@ -47,7 +43,7 @@ void Mos::generate()
   g.setWidth  ( mL );
   // end set gate
 
-  // set metal
+  // set viaDevice
   double  conSpace    = tech->rule( SpacingRule::MIN_SPACING   ,
                                     Layer::CONTACT );
   double  conInMetal  = tech->rule( SpacingRule::MIN_ENCLOSURE ,
@@ -55,50 +51,21 @@ void Mos::generate()
 
   int     conNum  = 1 + ( mW - 2 * conInDiff - conWidth ) /
                     ( conWidth + conSpace );
-  double  metalH  = conNum * ( conWidth + conSpace ) -
-                    conSpace + 2 * 0.06/*conInMetal*/;
-  double  metalW  = conWidth  + 2 * conInMetal;
-  double  metalX  = ( mL + conWidth  ) / 2 + conAndPoly;
-  double  metalY  = ( mW - metalH    ) / 2 - conInDiff   +
-                     0.06/*conInMetal*/;
-
-  s.clear();
-  d.clear();
-
-  Layer model;
-
-  model.setType   ( Layer::METAL1 );
-  model.setCenter ( metalX , metalY );
-  model.setHeight ( metalH );
-  model.setWidth  ( metalW );
+  double  viaX    = ( mL + conWidth ) / 2 + conAndPoly;
+  double  viaY    = 0;
   
-  s.push_back( model );
+  s.setCenter     ( viaX , viaY );
+  s.setRow        ( conNum );
+  s.setConWidth   ( conWidth );
+  s.setConSpace   ( conSpace );
+  s.setConInUpper ( conInMetal , 0.06 );
+  s.setConInLower ( conInDiff  , conInDiff );
+  s.generate      ();
   
-  model.setCenter( -metalX , metalY );
-  
-  d.push_back( model );
-  // end set metal
+  d = s;
+  d.setCenter     ( -viaX , viaY );
 
-  // set contact
-  double  contactY = ( diff.height() - conWidth ) / 2 - conInDiff;
-
-  model.setType   ( Layer::CONTACT );
-  model.setHeight ( conWidth );
-  model.setWidth  ( conWidth );
-
-  for( register int i = 0 ; i < conNum ; i++ )
-  {
-     model.setCenter( -metalX , contactY ); s.push_back( model );
-     model.setCenter(  metalX , contactY ); d.push_back( model );
-     
-     contactY -= ( conSpace + conWidth );
-  }
-  
-  double  yBias = s[METAL].center().y() - diff.center().y();
-  
-  for( Layer &layer : s ) layer.setCenterY( layer.center().y() - yBias );
-  for( Layer &layer : d ) layer.setCenterY( layer.center().y() - yBias );
-  // end set contact
+  // end set viaDevice
 
   // set implant
   Layer::Type impLayer;
@@ -135,17 +102,17 @@ bool Mos::write( const char *fileName )
     file << setw( TAB + 1 )         << "width";
     file << endl;
 
-    writeLayer( file , "Diffusion"   , diff     );
-    writeLayer( file , "SourceMetal" , s[METAL] );
+    writeLayer( file , "Diffusion"   , diff           );
+    writeLayer( file , "SourceMetal" , s.upperLayer() );
 
-    for( unsigned int i = CONTACT ; i < s.size() ; i++ )
-       writeLayer( file , "SourceContact" , s[i] );
+    for( const Layer &layer : s.contact()[0] )
+       writeLayer( file , "SourceContact" , layer );
 
-    writeLayer( file , "Gate"        , g        );
-    writeLayer( file , "DrainMetal"  , d[METAL] );
+    writeLayer( file , "Gate"        , g              );
+    writeLayer( file , "DrainMetal"  , d.upperLayer() );
 
-    for( unsigned int i = CONTACT ; i < d.size() ; i++ )
-       writeLayer( file , "DrainContact" , d[i] );
+    for( const Layer &layer : d.contact()[0] )
+       writeLayer( file , "DrainContact" , layer );
 
     writeLayer( file , "Implant"     , imp      );
 
@@ -167,7 +134,12 @@ bool Mos::read( const char *fileName )
       if      ( id == "Type" )
       {
         while( id != ":" )  file >> id;
-        file >> mType;
+        
+        int type;
+        
+        file >> type;
+        
+        mType = static_cast<Type>( type );
       }
       else if ( id == "W" )
       {
@@ -207,21 +179,19 @@ ostream& operator<<( ostream &out , Mos &mos )
   const double TAB = out.precision();
 
   out << left;
-  out << mos.type()               << " ";
-  out << setw( TAB )              << mos.w();
-  out << setw( TAB )              << mos.l();
-  out << mos.m()                  << endl;
-  out << mos.diffusion()          << endl;
-  out << mos.source()[Mos::METAL] << endl;
+  out << mos.type()                 << " ";
+  out << setw( TAB )                << mos.w();
+  out << setw( TAB )                << mos.l();
+  out << mos.m()                    << endl;
+  out << mos.diffusion()            << endl;
+  out << mos.source().upperLayer()  << endl;
 
-  for( unsigned int i = Mos::CONTACT ; i < mos.source().size() ; i++ )
-     out << mos.source()[i] << endl;
+  for( const Layer &layer : mos.source().contact()[0] ) out << layer << endl;
 
-  out << mos.gate()              << endl;
-  out << mos.drain()[Mos::METAL] << endl;
+  out << mos.gate()               << endl;
+  out << mos.drain().upperLayer() << endl;
 
-  for( unsigned int i = Mos::CONTACT ; i < mos.drain().size() ; i++ )
-     out << mos.drain()[i] << endl;
+  for( const Layer &layer : mos.drain().contact()[0] )  out << layer << endl;
 
   return out << mos.implant() << endl;
 }

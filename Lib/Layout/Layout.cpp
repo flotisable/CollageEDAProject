@@ -17,8 +17,8 @@ bool Layout::drawMos( Mos *mos )
   success &= drawLayer( mos->diffusion() + center );
   success &= drawLayer( mos->gate     () + center );
 
-  for( auto &layer : mos->source() ) success &= drawLayer( layer + center );
-  for( auto &layer : mos->drain () ) success &= drawLayer( layer + center );
+  success &= drawViaDevice( const_cast<ViaDevice*>( &mos->source () ) );
+  success &= drawViaDevice( const_cast<ViaDevice*>( &mos->drain  () ) );
 
   success &= drawLayer( mos->implant() + center );
 
@@ -29,14 +29,19 @@ bool Layout::drawViaDevice( ViaDevice *viaDevice )
 {
   bool success = true;
 
-  success &= drawLayer( viaDevice->diffusion() + center );
-  success &= drawLayer( viaDevice->metal    () + center );
+  center += viaDevice->center();
 
-  for( int i = 0 ; i < viaDevice->row() ; i++ )
-     for( int j = 0 ; j < viaDevice->column() ; j++ )
+  success &= drawLayer( viaDevice->lowerLayer() + center );
+  success &= drawLayer( viaDevice->upperLayer() + center );
+
+  for( unsigned int i = 0 ; i < viaDevice->row() ; i++ )
+     for( unsigned int j = 0 ; j < viaDevice->column() ; j++ )
         success &= drawLayer( viaDevice->contact()[i][j] + center );
 
-  success &= drawLayer( viaDevice->implant() + center );
+  if( viaDevice->impAllowed() )
+    success &= drawLayer( viaDevice->implant() + center );
+
+  center -= viaDevice->center();
 
   return success;
 }
@@ -66,12 +71,20 @@ bool Layout::drawCircuit( Circuit *circuit )
   }
 
   for( Node *node : circuit->io() )
+  {
      for( Layer &segment : static_cast<NetNode*>( node )->segments() )
         success &= drawLayer( segment + center );
+     for( ViaDevice &viaDevice : static_cast<NetNode*>( node )->contacts() )
+        success &= drawViaDevice( &viaDevice );
+  }
 
   for( Node *node : circuit->net() )
+  {
      for( Layer &segment : static_cast<NetNode*>( node )->segments() )
         success &= drawLayer( segment + center );
+     for( ViaDevice &viaDevice : static_cast<NetNode*>( node )->contacts() )
+        success &= drawViaDevice( &viaDevice );
+  }
 
   return success;
 }

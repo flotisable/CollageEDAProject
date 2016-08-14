@@ -6,6 +6,7 @@ bool CircuitModel::layout()
 {
   if( !tech || !placer || !router ) return false;
 
+  generate();
   placer->setTechFile( tech );
   router->setTechFile( tech );
 

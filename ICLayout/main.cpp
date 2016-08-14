@@ -53,8 +53,7 @@ int main()
        {
           model->setPlacement ( &placer );
           model->setRouting   ( &router );
-          model->generate ();
-          model->layout   ();
+          model->layout       ();
 
           layout->setCenter( 0 , 0 );
           layout->drawCircuit( model );
