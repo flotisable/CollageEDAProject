@@ -1,33 +1,24 @@
 #include"Hspice.h"
 
-#include <ctype.h>
-#include <queue>
-#include <algorithm>
+#include <cctype>
 
 #include "../Model/CircuitModel.h"
 #include "../Model/MosModel.h"
 #include "../Node/NetNode.h"
 #include "../Node/MosNode.h"
 #include "../Node/CircuitNode.h"
-#include "../Component/Circuit.h"
-#include "../Component/Mos.h"
+#include "../Component/CircuitBoard.h"
 
 const string  Hspice::SUBCKT_HEAD_KEYWORD = ".SUBCKT";
 const string  Hspice::SUBCKT_TAIL_KEYWORD = ".ENDS";
 
-Hspice::Hspice( TechFile *techFile ) : tech( techFile )
+Hspice::Hspice()
 {
   id.resize( ID_NUM );
   id[VDD  ] = "VDD";
   id[GND  ] = "GND";
   id[PMOS ] = "PCH";
   id[NMOS ] = "NCH";
-}
-
-Hspice::~Hspice()
-{
-  for( CircuitModel *model : models )
-     if( model ) delete model;
 }
 
 bool Hspice::read( const char *fileName )
@@ -47,20 +38,16 @@ bool Hspice::read( const char *fileName )
 
 			if( word[SUBCKT_ID] == SUBCKT_HEAD_KEYWORD ) // read subckt
       {
-        int index = searchModel( word[SUBCKT_NAME] );
-        
-        if( index == -1 )
-        {
-          CircuitModel *model = new CircuitModel( word[SUBCKT_NAME] , tech );
+        CircuitModel *model = circuitBoard->searchModel( word[SUBCKT_NAME] );
 
-          models.push_back( model );
-          index = models.size() - 1;
+        if( !model )
+        {
+          model = new CircuitModel( word[SUBCKT_NAME] );
+          circuitBoard->model().push_back( model );
         }
-        setupModel( index );
+        setupModel( model );
       }
     }
-    mergeModel();
-
 		file.close();
 		return true;
 	}
@@ -71,75 +58,24 @@ bool Hspice::write( const char *fileName )
 {
   if( file.is_open() ) file.close();
 	file.open( fileName , ios::out );
-	
+
 	if( file.is_open() )
 	{
-    for( CircuitModel *model : models ) writeCircuitModel( model );
+    for( CircuitModel *model : circuitBoard->model() )
+       writeCircuitModel( model );
 		file.close();
 		return true;
 	}
 	return false;
 }
 
-void Hspice::mergeModel()
+
+void Hspice::setupModel( Circuit *model )
 {
-  int                   mainCircuitNum = 0;
-  queue<CircuitModel*>  pipe;
-
-  for( CircuitModel *model : models )
-     if( model->isMainCircuit() )
-     {
-       models[mainCircuitNum] = model;
-       mainCircuitNum++;
-     }
-  models.resize( mainCircuitNum );
-
-  for( CircuitModel *model : models )
-  {
-     vector<Model*> &circuitModels = model->circuitModel();
-
-     pipe.push( model );
-
-     while( pipe.size() )
-     {
-       Circuit  *temp       = pipe.front();
-       int      parentIndex = model->searchModel( Model::CIRCUIT ,
-                                                  pipe.front() );
-
-       for( Node *node : temp->circuitCell() )
-       {
-          CircuitModel  *circuit  = static_cast<CircuitNode*>( node )
-                                    ->model();
-          int           index     = model->searchModel( Model::CIRCUIT ,
-                                                        circuit );
-
-          if( index == -1 )
-          {
-            pipe.push( circuit );
-            circuitModels.push_back( circuit );
-          }
-          else
-            if( index < parentIndex )
-              swap( circuitModels[index] , circuitModels[parentIndex] );
-       }
-       pipe.pop();
-     }
-
-     reverse( circuitModels.begin() , circuitModels.end() );
-  }
-}
-
-
-void Hspice::setupModel( int index )
-{
-  Circuit *model = models[index];
-
   // io pin
-  for( register unsigned int i = SUBCKT_NET ; i < word.size() ; i++ )
+  for( unsigned int i = SUBCKT_NET ; i < word.size() ; i++ )
 	{
-    NetNode *node = new NetNode;
-
-    node->setName( word[i] );
+    NetNode *node = new NetNode( word[i] );
 
     if      (	word[i] == id[VDD] )  node->setType( Node::VDD  );
     else if ( word[i] == id[GND] )  node->setType( Node::VSS  );
@@ -150,14 +86,15 @@ void Hspice::setupModel( int index )
 
   while( getline( file , buffer ) ) // net and cell
   {
-    if( buffer.empty() ) continue;
+    if( buffer.empty()  ) continue;
     getWord();
     if( word[0] == SUBCKT_TAIL_KEYWORD || file.eof() )	return;
 
     switch( word[0][0] )
     {
-      case 'M': setupMos    ( model ); break;
-      case 'X': setupSubckt ( model ); break;
+      case 'M': setupMos    ( model );  break;
+      case 'X': setupSubckt ( model );  break;
+      default:                          break;
     }
   }
 }
@@ -165,10 +102,9 @@ void Hspice::setupModel( int index )
 void Hspice::setupMos( Circuit *model )
 {
   unsigned int  wordIndex = 0;
-  MosNode       *node     = new MosNode;
+  MosNode       *node     = new MosNode( word[M_NAME] );
 
   model->mosCell().push_back( node );
-  node->setName( word[M_NAME] );
 
   // set net
   for( int i = D ; i < D + MosNode::PIN_NUM ; i++ )
@@ -202,85 +138,67 @@ void Hspice::setupMos( Circuit *model )
     mosModel->setM( 1 );
   // end set mos
 
-  int index = model->searchModel( Model::MOS , mosModel );
+  Model *modelT = model->searchModel( Model::MOS , mosModel );
 
-  if( index == -1 )
+  if( !modelT )
   {
+    modelT = mosModel;
     model->mosModel().push_back( mosModel );
-    index = model->mosModel().size() - 1;
   }
   else
     delete mosModel;
 
-  node->setModel( static_cast<MosModel*>( model->mosModel()[index] ) );
+  node->setModel( static_cast<MosModel*>( modelT ) );
 }
 
 void Hspice::setupSubckt( Circuit *model )
 {
-  CircuitNode *node = new CircuitNode;
+  CircuitNode *node = new CircuitNode( word[X_NAME] );
 
   model->circuitCell().push_back( node );
-  node->setName( word[X_NAME] );
 
-  // ste net
-  for( register unsigned int i = X_NET ; i < word.size() - 1 ; i++ )
+  // set net
+  for( unsigned int i = X_NET ; i < word.size() - 1 ; i++ )
      setupNode( node , model , word[i] );
      
-  int index = searchModel( word.back() );
+  CircuitModel *circuitModel = circuitBoard->searchModel( word.back() );
 
-  if( index == -1 )
+  if( !circuitModel )
   {
-    CircuitModel *circuitModel = new CircuitModel;
-    
-    circuitModel->setTechFile( tech );
-  
-    models.push_back( circuitModel );
-    models.back()->setName( word.back() );
+    circuitModel = new CircuitModel( word.back() );
 
-    index = models.size() - 1;
+    circuitBoard->model().push_back( circuitModel );
   }
   else
-    models[index]->setMainCircuit( false );
-  node->setModel( models[index] );
+    circuitModel->setMainCircuit( false );
+  node->setModel( circuitModel );
 }
 
 void Hspice::setupNode( Node *node , Circuit *model , const string &netName )
 {
-  int index = model->searchNode( Node::NET , netName );
+  Node *nodeT = model->searchNode( Node::NET , netName );
 
-  if( index == -1 )
-  {
-    index = model->searchNode( Node::IO , netName );
-
-    if( index == -1 )
+  if( !nodeT )
+    if( !( nodeT = model->searchNode( Node::IO , netName ) ) )
     {
-      model->net().push_back( new NetNode );
-      model->net().back()->setName( netName );
-      index = model->net().size() - 1;
+      nodeT = new NetNode( netName );
+      model->net().push_back( nodeT );
     }
-    else
-    {
-      node->connect().push_back( model->io()[index] );
-      if( model->io()[index]->searchConnectNode( node->name() ) == -1 )
-        model->io()[index]->connect().push_back( node );
-      return;
-    }
-  }
-  node->connect().push_back( model->net()[index] );
+  node->connect().push_back( nodeT );
 
-  if( model->net()[index]->searchConnectNode( node->name() ) == -1 )
-    model->net()[index]->connect().push_back( node );
+  if( nodeT->searchConnectNode( node->name() ) == -1 )
+    nodeT->connect().push_back( node );
 }
 
 void Hspice::getWord()
 {
   word.clear();
-  for( register unsigned int i = 0 ; i < buffer.size() ; i++ )
+  for( unsigned int i = 0 ; i < buffer.size() ; i++ )
   {
      if( buffer[i] == '*' ) return;
      if( !isNullChar( buffer[i] ) )
      {
-       register unsigned int j;
+       unsigned int j;
        
        for( j = i ; j < buffer.size() ; j++ )
        {
@@ -293,12 +211,6 @@ void Hspice::getWord()
   }
 }
 
-int Hspice::searchModel( const string &name )
-{
-  for( register unsigned int i = 0 ; i < models.size() ; i++ )
-     if( models[i]->name() == name ) return i;
-  return -1;
-}
 
 void Hspice::writeCircuitModel( CircuitModel *model )
 {

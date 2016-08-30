@@ -31,8 +31,8 @@ class ICRouting
     std::vector<std::vector<int>> vcg;
     int                           track;
 
-    bool channelRouting ( CircuitModel *model );
-    bool gridRouting    ( CircuitModel *model );
+    bool channelRouting ();
+    bool gridRouting    ();
     
     void channelCost  ();
     void channelRough ();

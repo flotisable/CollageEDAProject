@@ -17,14 +17,15 @@ using namespace std;
 
 bool ICPlacement::placement( CircuitModel *model )
 {
-  if( model->circuitCell().size() ) return circuitPlacement ( model );
-  else                              return mosPlacement     ( model );
+  if( model ) circuitModel = model;
+  else        return false;
+
+  if( model->circuitCell().size() ) return circuitPlacement ();
+  else                              return mosPlacement     ();
 }
 
-bool ICPlacement::mosPlacement( CircuitModel *model )
+bool ICPlacement::mosPlacement()
 {
-  circuitModel = model;
-  
   mosCost ();
   mosRough();
 
@@ -35,10 +36,8 @@ bool ICPlacement::mosPlacement( CircuitModel *model )
   return true;
 }
 
-bool ICPlacement::circuitPlacement( CircuitModel *model )
+bool ICPlacement::circuitPlacement()
 {
-  circuitModel = model;
-  
   circuitCost   ();
   circuitRough  ();
   circuitDetail ();
@@ -65,17 +64,17 @@ void ICPlacement::mosCost()
        pmosNum++;
      }
 
-     for( int j = 0 ; j < MosNode::PIN_NUM ; j++ )
+     for( int i = 0 ; i < MosNode::PIN_NUM ; i++ )
      {
-        NetNode *node = static_cast<NetNode*>( mosNode->connect()[j] );
+        NetNode *node = static_cast<NetNode*>( mosNode->connect()[i] );
 
         if( node->type() == Node::VDD || node->type() == Node::VSS )
           continue;
 
         cost += ( node->connect().size() - 1 );
 
-        for( register int k = 0 ; k < j ; k++ )
-           if( node->name() == mosNode->connect()[k]->name() )
+        for( int j = 0 ; j < i ; j++ )
+           if( node->name() == mosNode->connect()[j]->name() )
            {
              cost -= ( node->connect().size() - 1 );
              break;
@@ -183,23 +182,23 @@ void ICPlacement::mosDetail()
                                     Layer::PIMPLANT );
   double  conAndDiff  = tech->rule( SpacingRule::MIN_SPACING ,
                                     Layer::CONTACT , Layer::DIFFUSION );
-  Mos     *pmos       = static_cast<MosNode*>( mosNodes[0]        )->model();
-  Mos     *nmos       = static_cast<MosNode*>( mosNodes[pmosNum]  )->model();
-  double  mosWidth    = max(  pmos->implant().width() + pimpSpace ,
-                              nmos->implant().width() + nimpSpace );
-  double  channel     = ( circuitModel->ioNum() - 2 +
-                          circuitModel->netNum() + 1 ) *
-                        ( metal2Width + metal2Space ) - metal2Space;
-  double  p2n         = channel + 2 * conAndDiff +
-                        ( pmos->diffusion().height() +
-                          nmos->diffusion().height() ) / 2;
-  double  height      = ( pmos->implant().height() +
-                          nmos->implant().height() ) / 2 +
+
+  Mos     *pmos     = static_cast<MosNode*>( mosNodes[0]        )->model();
+  Mos     *nmos     = static_cast<MosNode*>( mosNodes[pmosNum]  )->model();
+  double  mosWidth  = max(  pmos->implant().width() + pimpSpace ,
+                            nmos->implant().width() + nimpSpace );
+  double  channel   = ( circuitModel->ioNum() - 2 + circuitModel->netNum()
+                         + 1 ) * ( metal2Width + metal2Space ) - metal2Space;
+  double  p2n       = channel + 2 * conAndDiff +
+                      ( pmos->diffusion().height() +
+                        nmos->diffusion().height() ) / 2;
+  double  height    = ( pmos->implant().height() +
+                        nmos->implant().height() ) / 2 +
                         p2n + ( nimpSpace + pimpSpace ) / 2;
-  double  width       = max(  pmosNum , static_cast<int>( mosNodes.size() -
-                              pmosNum ) ) * mosWidth + 2 * channel;
-  double  xbias       = ( pmosNum & 1 ) ? 0 : -mosWidth / 2 ;
-  double  ybias       = ( height - pimpSpace - pmos->implant().height() ) / 2;
+  double  width     = max(  pmosNum , static_cast<int>( mosNodes.size() -
+                            pmosNum ) ) * mosWidth + 2 * channel;
+  double  xbias     = ( pmosNum & 1 ) ? 0 : -mosWidth / 2 ;
+  double  ybias     = ( height - pimpSpace - pmos->implant().height() ) / 2;
 
   for( Node *mosNode : mosNodes )
   {
@@ -222,26 +221,27 @@ void ICPlacement::circuitCost()
   // caculate cost
   for( Node *node : circuitNodes )
   {
-     vector<Node*>  &nets     = node->connect();
      CircuitModel   *circuit  = static_cast<CircuitNode*>( node )->model();
      int            cost      = 0;
 
      node->setHeight( circuit->height ()  );
      node->setWidth ( circuit->width  ()  );
 
-     for( unsigned int j = 0 ; j < nets.size() ; j++ )
+     for( Node *net : node->connect() )
      {
-        if( nets[j]->type() == Node::VDD || nets[j]->type() == Node::VSS )
-          continue;
+        if( net->type() == Node::VDD || net->type() == Node::VSS ) continue;
 
-        cost += nets[j]->connect().size() - 1;
+        cost += net->connect().size() - 1;
 
-        for( unsigned int k = 0 ; k < j ; k++ )
-           if( nets[j]->name() == nets[k]->name() )
+        for( Node *netPast : node->connect() )
+        {
+           if( netPast == net ) break;
+           if( net->name() == netPast->name() )
            {
-             cost -= nets[j]->connect().size() - 1;
+             cost -= net->connect().size() - 1;
              break;
            }
+        }
      }
      node->setCost( cost );
   }
@@ -285,7 +285,7 @@ void ICPlacement::circuitRough()
   {
     Node          *node   = placeQueue.front();
     int           layer   = 1;
-    int           direct  = 0;
+    int           direct  = RIGHT;
 
     for( Node *netNode : node->connect() )
     {
@@ -313,23 +313,24 @@ void ICPlacement::circuitRough()
               {
                 x += layer;
               }
-              if( LEFT_BOTTOM <= direct && direct <= LEFT_TOP )
+              else if( LEFT_BOTTOM <= direct && direct <= LEFT_TOP )
               {
                 x -= layer;
                 if( x < xMin ) xMin = x;
               }
+              
               if( RIGHT_BOTTOM <= direct && direct <= LEFT_BOTTOM )
               {
                 y -= layer;
                 if( y < yMin ) yMin = y;
               }
-              if( LEFT_TOP <= direct && direct <= RIGHT_TOP )
+              else if( LEFT_TOP <= direct && direct <= RIGHT_TOP )
               {
                 y += layer;
               }
 
               subcktNode->setCenter( x , y );
-              if( direct < MAX_DIRECT ) direct++;
+              if( direct != RIGHT_TOP ) direct++;
               else
               {
                 direct = RIGHT;

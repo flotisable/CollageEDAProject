@@ -32,24 +32,26 @@ int Circuit::nodeNum() const
   return number;
 }
 
-int Circuit::searchNode( Node::Type type , const string &name )
+Node* Circuit::searchNode( Node::Type type , const string &name )
 {
-  if( type == Node::UNKNOWN ) return -1;
+  if( type == Node::UNKNOWN ) return nullptr;
 
-  for( register unsigned int i = 0 ; i < nodes[type].size() ; i++ )
-     if( nodes[type][i]->name() == name ) return i;
-  return -1;
+  for( Node *node : nodes[type] )
+     if( node->name() == name ) return node;
+  return nullptr;
 }
 
-int Circuit::searchModel( Model::Type type , Model *model )
+Model* Circuit::searchModel( Model::Type type , Model *model )
 {
+  if( !model ) return nullptr;
+
   switch( type )
   {
     case Model::MOS:      return searchMos    ( static_cast<MosModel*>
                                               ( model ) );
     case Model::CIRCUIT:  return searchCircuit( static_cast<CircuitModel*>
                                               ( model ) );
-    default:              return -1;
+    default:              return nullptr;
   }
 }
 
@@ -76,25 +78,17 @@ bool Circuit::generate()
 }
 
 
-int Circuit::searchMos( MosModel *model )
+Model* Circuit::searchMos( MosModel *model )
 {
-  for( register unsigned int i = 0 ; i < models[Model::MOS].size() ; i++ )
-  {
-     MosModel *mos = static_cast<MosModel*>( models[Model::MOS][i] );
-
-     if( *mos == *model ) return i;
-  }
-  return -1;
+  for( Model *mosModel : models[Model::MOS] )
+     if( *static_cast<MosModel*>( mosModel ) == *model ) return mosModel;
+  return nullptr;
 }
 
-int Circuit::searchCircuit( CircuitModel *model )
+Model* Circuit::searchCircuit( CircuitModel *model )
 {
-  for( register unsigned int i = 0 ; i < models[Model::CIRCUIT].size() ; i++ )
-  {
-     CircuitModel *circuit =  static_cast<CircuitModel*>
-                              ( models[Model::CIRCUIT][i] );
-
-     if( model->name() == circuit->name() ) return i;
-  }
-  return -1;
+  for( Model *circuitModel : models[Model::CIRCUIT] )
+     if( model->name() == static_cast<CircuitModel*>( circuitModel )->name() )
+       return circuitModel;
+  return nullptr;
 }

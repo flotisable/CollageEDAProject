@@ -20,14 +20,15 @@ using namespace std;
 
 bool ICRouting::routing( CircuitModel *model )
 {
-  if( model->circuitCell().size() ) return gridRouting    ( model );
-  else                              return channelRouting ( model );
+  if( model ) circuitModel = model;
+  else        return false;
+
+  if( model->circuitCell().size() ) return gridRouting    ();
+  else                              return channelRouting ();
 }
 
-bool ICRouting::channelRouting( CircuitModel *model )
+bool ICRouting::channelRouting()
 {
-  circuitModel = model;
-
   channelCost   ();
   channelRough  ();
   channelDetail ();
@@ -35,7 +36,7 @@ bool ICRouting::channelRouting( CircuitModel *model )
   return true;
 }
 
-bool ICRouting::gridRouting( CircuitModel *model )
+bool ICRouting::gridRouting()
 {
   return true;
 }
@@ -421,12 +422,12 @@ void ICRouting::channelRough()
         if( netlist[j].center().x() == netlist[j].center().y() )
         {
           // height means metal layer and direction , width means pin or track
-          netInfo[netIndex].push_back( Layer( Layer::METAL1 ,
-                                              -1 , segmentTrack ,
-                                              netlist[j].center().x() ) );
-          netInfo[netIndex].push_back( Layer( Layer::METAL1 ,
-                                              segmentTrack  , track ,
-                                              netlist[j].center().x() ) );
+          netInfo[netIndex].push_back(
+            Layer(  Layer::METAL1 , -1 , segmentTrack ,
+                    netlist[j].center().x() ) );
+          netInfo[netIndex].push_back(
+            Layer(  Layer::METAL1 , segmentTrack , track ,
+                    netlist[j].center().x() ) );
           listIndex++;
         }
         else if(  netlist[j].center().x() <= leftEdge &&
@@ -459,30 +460,26 @@ void ICRouting::channelRough()
               bottomEdge  = segmentTrack;
             }
 
-            netInfo[netIndex].push_back( Layer( Layer::METAL1  ,
-                                                topEdge   , bottomEdge ,
-                                                leftEdge ) );
+            netInfo[netIndex].push_back(
+              Layer( Layer::METAL1  , topEdge , bottomEdge , leftEdge ) );
           }
-          netInfo[netIndex].push_back( Layer( Layer::METAL2 ,
-                                              segment.center().x() ,
-                                              segment.center().y() ,
-                                              segmentTrack ) );
+          netInfo[netIndex].push_back(
+            Layer(  Layer::METAL2         , segment.center().x() ,
+                    segment.center().y()  , segmentTrack ) );
           if( rightEdge >= netlist[j].center().y() )
           {
             switch( static_cast<int>( netlist[j].height() ) )
             {
               case Mos::NMOS:
 
-                netInfo[netIndex].push_back( Layer( Layer::METAL1 ,
-                                                    segmentTrack , track ,
-                                                    rightEdge ) );
+                netInfo[netIndex].push_back(
+                  Layer( Layer::METAL1 , segmentTrack , track , rightEdge ) );
                 break;
 
               case Mos::PMOS:
 
-                netInfo[netIndex].push_back( Layer( Layer::METAL1 ,
-                                                    -1  , segmentTrack ,
-                                                    rightEdge ) );
+                netInfo[netIndex].push_back(
+                  Layer( Layer::METAL1 , -1 , segmentTrack , rightEdge ) );
                 break;
             }
             listIndex++;

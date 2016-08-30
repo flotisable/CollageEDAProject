@@ -10,6 +10,7 @@ class TechFile;
 class CircuitModel;
 class Circuit;
 class Node;
+class CircuitBoard;
 
 class Hspice
 {
@@ -50,29 +51,22 @@ class Hspice
       ID_NUM
     };
 
-    Hspice( TechFile *techFile = nullptr );
-    ~Hspice();
+    Hspice();
 
-    inline vector<CircuitModel*>& model();
-
-    inline void setTechFile( TechFile *techFile );
-    
-    inline void setID( ID index , const string &name );
+    inline void setCircuitBoard ( CircuitBoard *board );
+    inline void setID           ( ID index , const string &name );
 
     bool read ( const char *fileName );
     bool write( const char *fileName = "HspiceGraph.txt" );
 
-    void mergeModel();
-
   private:
 
-    void setupModel ( int     index   );
-    void setupMos   ( Circuit *model  );
-    void setupSubckt( Circuit *model  );
+    void setupModel ( Circuit *model );
+    void setupMos   ( Circuit *model );
+    void setupSubckt( Circuit *model );
     void setupNode  ( Node *node , Circuit *model , const string &netName );
 
-    void  getWord     ();
-    int   searchModel ( const string &name );
+    void getWord();
     
     void writeCircuitModel( CircuitModel *model );
     
@@ -81,8 +75,7 @@ class Hspice
     static const string SUBCKT_HEAD_KEYWORD;
     static const string SUBCKT_TAIL_KEYWORD;
 
-    TechFile              *tech;
-    vector<CircuitModel*> models;
+    CircuitBoard  *circuitBoard;
 
     fstream         file;
     string          buffer;
@@ -90,11 +83,8 @@ class Hspice
     vector<string>  id;
 };
 
-inline vector<CircuitModel*>& Hspice::model()
-{ return models; }
-
-inline void Hspice::setTechFile( TechFile *techFile )
-{ tech = techFile; }
+inline void Hspice::setCircuitBoard( CircuitBoard *board )
+{ circuitBoard = board; }
 
 inline void Hspice::setID( ID index , const string &name )
 { id[index] = name; }

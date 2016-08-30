@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <time.h>
+#include <ctime>
 using namespace std;
 
 #include "../Lib/Spice/Hspice.h"
@@ -13,6 +13,7 @@ using namespace std;
 #include "../Lib/Layout/SkillLayout.h"
 #include "../Lib/EDA/ICPlacement.h"
 #include "../Lib/EDA/ICRouting.h"
+#include "../Lib/Component/CircuitBoard.h"
 
 int main()
 {
@@ -23,16 +24,20 @@ int main()
   for( int i = 1 ; i <= TIMES ; i++ )
   {
      TechFile     *techFile = new CadenceTechFile;
-     Hspice       hspice( techFile );
+     Hspice       hspice;
      Layout       *layout   = new SkillLayout;
      ICPlacement  placer;
      ICRouting    router;
+     CircuitBoard circuitBoard( techFile , &hspice , &placer , &router ,
+                                layout );
      double       start     = clock();
 
      hspice.setID( Hspice::VDD   , "VDD"   );
      hspice.setID( Hspice::GND   , "VSS"   );
      hspice.setID( Hspice::PMOS  , "P_18"  );
      hspice.setID( Hspice::NMOS  , "N_18"  );
+     
+     hspice.setCircuitBoard( &circuitBoard );
 
      if( hspice.read( "Full_adder.sp" ) )
      {
@@ -49,16 +54,7 @@ int main()
          break;
        }
 
-       for( CircuitModel *model : hspice.model() )
-       {
-          model->setPlacement ( &placer );
-          model->setRouting   ( &router );
-          model->layout       ();
-
-          layout->setCenter( 0 , 0 );
-          layout->drawCircuit( model );
-          layout->drawRect( Layer::NWELL , *model );
-       }
+       circuitBoard.process();
 
        if( hspice.write() ) cout << "Write\n";
        else                 cout << "Write Error\n";

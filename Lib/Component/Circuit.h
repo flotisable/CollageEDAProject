@@ -37,21 +37,21 @@ class Circuit
     inline void setTechFile   ( TechFile  *techFile  	);
     inline void setMainCircuit( bool      mainCircuit	);
 
-    int searchNode  ( Node  ::Type type , const string 	&name  	);
-    int searchModel ( Model ::Type type , Model         *model  );
+    Node*   searchNode  ( Node  ::Type type , const string 	&name  	);
+    Model*  searchModel ( Model ::Type type , Model         *model  );
 
     bool generate();
 
   protected:
-  
+
     TechFile  *tech;
 
   private:
 
-    int searchMos     ( MosModel      *model  );
-    int searchCircuit ( CircuitModel  *model  );
+    Model* searchMos    ( MosModel      *model  );
+    Model* searchCircuit( CircuitModel  *model  );
 
-    bool      main;
+    bool main;
 
     vector<vector<Node*>>   nodes;
     vector<vector<Model*>>  models;

@@ -23,8 +23,8 @@ class ICPlacement
     
     int           xMin;
 
-    bool mosPlacement     ( CircuitModel *model );
-    bool circuitPlacement ( CircuitModel *model );
+    bool mosPlacement     ();
+    bool circuitPlacement ();
     
     void mosCost  ();
     void mosRough ();
