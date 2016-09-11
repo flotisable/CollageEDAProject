@@ -217,6 +217,8 @@ void Hspice::writeCircuitModel( CircuitModel *model )
   file << "subckt name : " << model->name   ()  << endl;
   file << "height      : " << model->height ()  << endl;
   file << "width       : " << model->width  ()  << endl;
+  file << "minHeight   : " << model->minRect().height () << endl;
+  file << "minWidth    : " << model->minRect().width  () << endl;
   file << "area        : " << model->area   ()  << endl;
   file << "nodenum     : " << model->nodeNum()  << endl;
   file << "netnum      : " << model->netNum ()  << endl;

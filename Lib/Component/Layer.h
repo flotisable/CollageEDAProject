@@ -57,6 +57,7 @@ class Layer : public Rectangle
     inline double track   () const;
 
     inline void setType   ( Type  type    );
+    inline void setPin    ( int   headPin , int tailPin );
     inline void setHeadPin( int   headPin );
     inline void setTailPin( int   tailPin );
     inline void setTrack  ( int   track   );
@@ -99,6 +100,8 @@ inline double       Layer::tailPin() const { return center().y(); }
 inline double       Layer::track  () const { return width();      }
 
 inline void Layer::setType    ( Type type     ) { mType = type;           }
+inline void Layer::setPin     ( int  headPin , int tailPin )
+{ setCenter( headPin , tailPin ); }
 inline void Layer::setHeadPin ( int  headPin  ) { setCenterX( headPin );  }
 inline void Layer::setTailPin ( int  tailPin  ) { setCenterY( tailPin );  }
 inline void Layer::setTrack   ( int  track    ) { setWidth( track );      }

@@ -3,6 +3,7 @@
 #include "../Component/Mos.h"
 #include "../Model/MosModel.h"
 #include "../Model/CircuitModel.h"
+#include "../Node/NetNode.h"
 
 Circuit::~Circuit()
 {

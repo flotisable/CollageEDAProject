@@ -7,6 +7,8 @@ class CircuitModel;
 class TechFile;
 class NetNode;
 
+struct Block;
+
 class ICRouting
 {
   public:
@@ -23,13 +25,17 @@ class ICRouting
 
     CircuitModel *circuitModel;
     
-    int                           nmosBias;
-    int                           pmosFirst;
-    int                           nmosFirst;
+    int                           NMOS_BIAS;
+    int                           PMOS_FIRST;
+    int                           NMOS_FIRST;
+    int                           MAX_PIN_NUM;
     std::vector<NetNode*>         nets;
-    const int                     VCG;
     std::vector<std::vector<int>> vcg;
     int                           track;
+
+    std::vector<std::vector<Block>> blocks;
+    double                          rowUnit;
+    double                          colUnit;
 
     bool channelRouting ();
     bool gridRouting    ();
@@ -37,10 +43,29 @@ class ICRouting
     void channelCost  ();
     void channelRough ();
     void channelDetail();
+    
+    void gridCost   ();
+    void gridRough  ();
+    void gridDetail ();
+};
+
+enum BlockValue
+{
+  SPACE     = -1,
+  OBSTACLE  = -2
+};
+
+struct Block
+{
+  int                   value       = SPACE;
+  int                   crossNum    = 0;
+  int                   detour      = 0;
+  NetNode               *connectNet;
+  std::vector<NetNode*> crossNet;
 };
 
 inline ICRouting::ICRouting( TechFile *techFile )
-  : tech( techFile ) , VCG( 2 ) {}
+  : tech( techFile ) {}
 
 inline void ICRouting::setTechFile( TechFile *techFile ) { tech = techFile; }
 

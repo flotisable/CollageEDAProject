@@ -3,7 +3,7 @@
 #include <queue>
 #include <algorithm>
 #include <vector>
-#include <float.h>
+#include <cfloat>
 using namespace std;
 
 #include "../Model/CircuitModel.h"
@@ -192,11 +192,12 @@ void ICPlacement::mosDetail()
   double  p2n       = channel + 2 * conAndDiff +
                       ( pmos->diffusion().height() +
                         nmos->diffusion().height() ) / 2;
-  double  height    = ( pmos->implant().height() +
-                        nmos->implant().height() ) / 2 +
-                        p2n + ( nimpSpace + pimpSpace ) / 2;
-  double  width     = max(  pmosNum , static_cast<int>( mosNodes.size() -
-                            pmosNum ) ) * mosWidth + 2 * channel;
+  double  minHeight = ( pmos->implant().height() +
+                        nmos->implant().height() ) / 2 + p2n;
+  double  minWidth  = max(  pmosNum , static_cast<int>( mosNodes.size() -
+                            pmosNum ) ) *mosWidth;
+  double  height    = minHeight + ( nimpSpace + pimpSpace ) / 2;
+  double  width     = minWidth + 2 * channel;
   double  xbias     = ( pmosNum & 1 ) ? 0 : -mosWidth / 2 ;
   double  ybias     = ( height - pimpSpace - pmos->implant().height() ) / 2;
 
@@ -208,8 +209,10 @@ void ICPlacement::mosDetail()
      mosNode->setCenter( x , y );
   }
 
-  circuitModel->setHeight( height  );
-  circuitModel->setWidth ( width   );
+  circuitModel->setHeight ( height  );
+  circuitModel->setWidth  ( width   );
+  circuitModel->minRect().setHeight ( minHeight );
+  circuitModel->minRect().setWidth  ( minWidth  );
   // end detail placement
 }
 
@@ -392,8 +395,12 @@ void ICPlacement::circuitDetail()
   vector<Node*> &circuitNodes = circuitModel->circuitCell();
 
   // detial placement
-  double xMax   = 0;
-  double yMax   = 0;
+  double xMax       = 0;
+  double yMax       = 0;
+  double minHeight  = 0;
+  double minWidth   = 0;
+  double minRectX   = DBL_MAX;
+  double minRectY   = DBL_MAX;
   double localX;
   double localY;
 
@@ -414,6 +421,8 @@ void ICPlacement::circuitDetail()
      double       localXr;
      double       halfH   = node->height()  / 2;
      double       halfW   = node->width ()  / 2;
+     Rectangle    minRect = static_cast<CircuitNode*>( node )->model()
+                            ->minRect();
 
      if( node->center().x() == xMin )  localX = localXr = 0;
 
@@ -448,10 +457,21 @@ void ICPlacement::circuitDetail()
      localY += halfH;
      localX += halfW;
      node->setCenter( localX , localY );
+     minRect.setCenter( node->center() );
      localY += halfH;
      localX += halfW;
-     if( localY > yMax ) yMax = localY;
-     if( localX > xMax ) xMax = localX;
+     if( minRect.bottom () < minRectY ) minRectY = minRect.bottom();
+     if( minRect.left   () < minRectX ) minRectX = minRect.left();
+     if( localY > yMax )
+     {
+       yMax       = localY;
+       minHeight  = minRect.top();
+     }
+     if( localX > xMax )
+     {
+       xMax     = localX;
+       minWidth = minRect.right();
+     }
 
      contour.erase  ( contour.begin() + front , contour.begin() + end );
      contour.insert ( contour.begin() + front ,
@@ -462,11 +482,13 @@ void ICPlacement::circuitDetail()
 
   double  height = yMax;
   double  width  = xMax;
-  Point   bias( - width / 2 , - height / 2 );
+  Point   bias( -width / 2 , -height / 2 );
 
   for( Node *node : circuitNodes ) node->setCenter( bias + node->center() );
 
   circuitModel->setHeight( height  );
   circuitModel->setWidth ( width   );
+  circuitModel->minRect().setHeight ( minHeight - minRectY );
+  circuitModel->minRect().setWidth  ( minWidth  - minRectX );
   // end detial placement
 }

@@ -11,6 +11,7 @@ using namespace std;
 class TechFile;
 class MosModel;
 class CircuitModel;
+class NetNode;
 
 class Circuit
 {

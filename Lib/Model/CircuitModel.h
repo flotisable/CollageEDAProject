@@ -22,7 +22,8 @@ class CircuitModel : public Model , public Circuit
                           ICPlacement   *placement  = nullptr ,
                           ICRouting     *routing    = nullptr );
 
-    inline const string& name() const;
+    inline const string&  name    () const;
+    inline Rectangle&     minRect ();
 
     inline void setPlacement( ICPlacement   *placement  );
     inline void setRouting  ( ICRouting     *routing    );
@@ -35,7 +36,8 @@ class CircuitModel : public Model , public Circuit
     ICPlacement *placer;
     ICRouting   *router;
 
-    string mName;
+    string    mName;
+    Rectangle mMinRect;
 };
 
 // CircuitModel inline member function
@@ -50,7 +52,8 @@ inline CircuitModel::CircuitModel(  const string  &name , TechFile *techFile ,
   : Model( CIRCUIT ) , Circuit( techFile ) , placer( placement ) ,
     router( routing ) , mName( name ) {}
 
-inline const string& CircuitModel::name() const { return mName; }
+inline const string&  CircuitModel::name    () const  { return mName;     }
+inline Rectangle&     CircuitModel::minRect ()        { return mMinRect;  }
 
 inline void CircuitModel::setPlacement( ICPlacement  *placement )
 { placer  = placement;  }

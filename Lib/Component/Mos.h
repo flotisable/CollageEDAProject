@@ -18,7 +18,8 @@ class Mos
     {
       UNKNOWN = -1,
       NMOS,
-      PMOS
+      PMOS,
+      TYPE_NUM
     };
 
     Mos(  Type type = UNKNOWN , TechFile *techFile = nullptr );
