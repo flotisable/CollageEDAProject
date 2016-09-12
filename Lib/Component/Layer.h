@@ -40,7 +40,7 @@ class Layer : public Rectangle
 
     static bool read  ( const char *fileName = "layerTypes.txt" );
     static bool write ( const char *fileName = "layerTypes.txt" );
-    
+
     static Type           map( const string &type );
     static inline string  map( Type         type  );
 

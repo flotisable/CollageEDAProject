@@ -23,6 +23,7 @@ class Point // ¤GºûÂI®y¼Ð
     inline Point& operator-=( const Point &p );
 
     inline bool operator==( const Point &p ) const;
+    inline bool operator!=( const Point &p ) const;
 
   private:
 
@@ -55,6 +56,8 @@ inline Point& Point::operator-=( const Point &p )
 
 inline bool Point::operator==( const Point &p ) const
 { return ( mX == p.x() && mY == p.y() ); }
+inline bool Point::operator!=( const Point &p ) const
+{ return ( mX != p.x() || mY != p.y() ); }
 // end Point inline member funcion
 
 #endif

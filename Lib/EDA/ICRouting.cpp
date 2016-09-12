@@ -1,12 +1,12 @@
 #include "ICRouting.h"
 
-#include <vector>
 #include <algorithm>
-#include <cmath>
-#include <iostream>
 #include <fstream>
 #include <cfloat>
 #include <iomanip>
+#include <queue>
+#include <climits>
+#include <iostream>
 using namespace std;
 
 #include "../Model/CircuitModel.h"
@@ -41,9 +41,9 @@ bool ICRouting::channelRouting()
 
 bool ICRouting::gridRouting()
 {
-  gridCost  ();
+  /*gridCost  ();
   gridRough ();
-  gridDetail();
+  gridDetail();*/
 
   return true;
 }
@@ -61,7 +61,6 @@ void ICRouting::channelCost()
           return front->center().y() > front->center().y();
         } );
 
-  const int PMOS_BIAS = 0;
   NMOS_BIAS  = -1;
   PMOS_FIRST = 0;
 
@@ -168,15 +167,14 @@ void ICRouting::channelCost()
           CONNECT_MOS = Mos::PMOS;
         }
         // end setup constant
-        net.setHeight ( CONNECT_MOS );
+        net.setHeight( CONNECT_MOS );
 
         // setup pins connect to mos and find max pin num
         for( int j = MosNode::D ; j <= MosNode::S ; j++ )
            if( node->connect()[j] == nets[i] )
            {
-             index[pinIndex] = ( node->cost() + BIAS ) * PINS_PER_MOS + j;
-             if( index[pinIndex] > MAX_PIN_NUM )
-               MAX_PIN_NUM = index[pinIndex];
+             index[pinIndex]  = ( node->cost() + BIAS ) * PINS_PER_MOS + j;
+             MAX_PIN_NUM      = max( MAX_PIN_NUM , index[pinIndex] );
              pinIndex++;
            }
         // end setup pins connect to mos and find max pin num
@@ -189,7 +187,7 @@ void ICRouting::channelCost()
              net.setTailPin( index[j] );
              nets[i]->segments().push_back( net );
            }
-           net.setHeadPin ( index[j] );
+           net.setHeadPin( index[j] );
            net.setWidth  ( CONNECT_MOS );
         }
         // end setup segments
@@ -255,19 +253,6 @@ void ICRouting::channelCost()
 
 void ICRouting::channelRough()
 {
-  static bool first = true;
-  fstream debug;
-  
-  if( first )
-  {
-    debug.open( "channelRoughLog.txt" , ios::out );
-    first = false;
-  }
-  else
-    debug.open( "channelRoughLog.txt" , ios::app );
-
-  debug << "Model : " << circuitModel->name() << endl;
-
   // rough routing
   vector<Layer>         intervals;
   vector<vector<Layer>> netInfo( nets.size() );
@@ -418,23 +403,7 @@ void ICRouting::channelRough()
                break;
              }
         }
-        debug << "track : " << track << " num : " << i << endl;
-        for( Layer &segment : intervals )
-        {
-           segment.setType( Layer::UNKNOWN );
-           debug << segment << endl;
-        }
-        debug << endl;
-        debug << "vcg\n";
-        for( auto specVcg : vcg )
-        {
-           for( auto vcg : specVcg )
-              debug << vcg << "\t";
-           debug << endl;
-        }
-        debug << endl;
      }
-     
      if( routeNumDiff == 0 ) break;
   }
   // end unrestricted left-edge routing
@@ -493,56 +462,44 @@ void ICRouting::channelRough()
      segment.setTailPin( rightEdge );
      // end merge segments
 
-     vector<Layer> &netlist = nets[netIndex]->segments();
+     vector<Layer>  &netlist = nets[netIndex]->segments();
+     Layer          layer;
 
      // connect segments
      for( unsigned int j = listIndex ; j < netlist.size() ; j++ )
      {
         if( netlist[j].headPin() == netlist[j].tailPin() )
         {
-          netInfo[netIndex].push_back(
-            Layer(  Layer::METAL1 , -1 , segmentTrack ,
-                    netlist[j].headPin() ) );
-          netInfo[netIndex].push_back(
-            Layer(  Layer::METAL1 , segmentTrack , track ,
-                    netlist[j].headPin() ) );
+          layer.setType ( Layer::METAL1 );
+          layer.setTrack( netlist[j].headPin() );
+          layer.setPin  ( -1 , segmentTrack );
+          netInfo[netIndex].push_back( layer );
+          layer.setPin  ( segmentTrack , track );
+          netInfo[netIndex].push_back( layer );
           listIndex++;
         }
         else if(  netlist[j].headPin()  <= leftEdge &&
                   leftEdge              <= netlist[j].tailPin() )
         {
           if( leftEdge == netlist[j].headPin() )
+          {
+            layer.setType ( Layer::METAL1 );
+            layer.setTrack( leftEdge );
+            
             switch( static_cast<int>( netlist[j].width() ) )
             {
-              case Mos::NMOS:
-              
-                netInfo[netIndex].push_back(
-                  Layer( Layer::METAL1 , segmentTrack , track , leftEdge ) );
-                break;
-
-              case Mos::PMOS:
-
-                netInfo[netIndex].push_back(
-                  Layer( Layer::METAL1 , -1 , segmentTrack , leftEdge ) );
-                break;
+              case Mos::NMOS: layer.setPin( segmentTrack , track );
+                              netInfo[netIndex].push_back( layer ); break;
+              case Mos::PMOS: layer.setPin( -1 , segmentTrack );
+                              netInfo[netIndex].push_back( layer ); break;
             }
+          }
           if( !netInfo[netIndex].empty() &&
               netInfo[netIndex].back().type() != Layer::METAL1 )
           {
-            int topEdge;
-            int bottomEdge;
-            int lastTrack = netInfo[netIndex].back().track();
-
-            if( lastTrack > segmentTrack )
-            {
-              topEdge     = segmentTrack;
-              bottomEdge  = lastTrack;
-            }
-            else
-            {
-              topEdge     = lastTrack;
-              bottomEdge  = segmentTrack;
-            }
+            int lastTrack   = netInfo[netIndex].back().track();
+            int topEdge     = min( lastTrack , segmentTrack );
+            int bottomEdge  = max( lastTrack , segmentTrack );
 
             netInfo[netIndex].push_back(
               Layer( Layer::METAL1  , topEdge , bottomEdge , leftEdge ) );
@@ -552,20 +509,15 @@ void ICRouting::channelRough()
                     segment.tailPin() , segmentTrack ) );
           if( rightEdge >= netlist[j].tailPin() )
           {
+            layer.setType ( Layer::METAL1 );
+            layer.setTrack( rightEdge );
+
             switch( static_cast<int>( netlist[j].height() ) )
             {
-              case Mos::NMOS:
-
-                netInfo[netIndex].push_back(
-                  Layer(  Layer::METAL1 , segmentTrack ,
-                          track , rightEdge ) );
-                break;
-
-              case Mos::PMOS:
-
-                netInfo[netIndex].push_back(
-                  Layer( Layer::METAL1 , -1 , segmentTrack , rightEdge ) );
-                break;
+              case Mos::NMOS: layer.setPin( segmentTrack , track );
+                              netInfo[netIndex].push_back( layer ); break;
+              case Mos::PMOS: layer.setPin( -1 , segmentTrack );
+                              netInfo[netIndex].push_back( layer ); break;
             }
             listIndex++;
           }
@@ -597,9 +549,7 @@ void ICRouting::channelRough()
 void ICRouting::channelDetail()
 {
   vector<Node*> &mosNodes = circuitModel->mosCell();
-
-  const int PMOS_BIAS = 0;
-
+  
   // detail routing
   double metal1Width  = tech->rule( SpacingRule::MIN_WIDTH    ,
                                     Layer::METAL1 );
@@ -658,8 +608,8 @@ void ICRouting::channelDetail()
         double  y = yBias;
         double  height;
         double  width;
-        bool    connectPmos = netlist[j].headPin() == -1;
-        bool    connectNmos = netlist[j].tailPin() == track;
+        bool    connectPmos = ( netlist[j].headPin() == -1    );
+        bool    connectNmos = ( netlist[j].tailPin() == track );
         bool    connectGate = static_cast<int>( netlist[j].track() ) % 3 ==
                               MosNode::G;
         double  headFix     = ( connectPmos ) ? 1   : 0;
@@ -853,7 +803,10 @@ void ICRouting::gridCost()
   
   for( int i = 0 ; i < row ; i++ )
      for( int j = 0 ; j < col ; j++ )
-        blocks[i][j].value = SPACE;
+     {
+        blocks[i][j].value = Block::SPACE;
+        blocks[i][j].visit = -1;
+     }
   // end setup grid maze
   
   // setup obstacle
@@ -883,7 +836,7 @@ void ICRouting::gridCost()
 
      for( int i = yMin ; i <= yMax ; i++ )
         for( int j = xMin ; j <= xMax ; j++ )
-           blocks[i][j].value = OBSTACLE;
+           blocks[i][j].value = Block::OBSTACLE;
   }
   // end setup obstacle
   
@@ -922,142 +875,694 @@ void ICRouting::gridRough()
   for( Node *node : circuitModel->net() )
      nets.push_back( static_cast<NetNode*>( node ) );
   // end setup nets
-  
+
   int netIndex = 0;
 
   for( NetNode *node : nets )
   {
-     // setup io pin
-     for( Node *connect : node->connect() )
+     vector<Point> ios;
+  
+     // route io pin
+     if( /*node->connect().size() > */1 )
      {
-        CircuitNode   *circuitNode  = static_cast<CircuitNode*>( connect );
-        CircuitModel  *model        = circuitNode->model();
-        int           index   = connect->searchConnectNode( node->name() );
-        NetNode       *net    = static_cast<NetNode*>( model->io()[index] );
-        
-        Layer *top    = nullptr;
-        Layer *bottom = nullptr;
-        Layer *left   = nullptr;
-        Layer *right  = nullptr;
-        
-        // find four side
-        for( Layer &segment : net->segments() )
-        {
-           if( !top     || top->top()       < segment.top() )
-             top    = &segment;
-           if( !bottom  || bottom->bottom() > segment.bottom() )
-             bottom = &segment;
-           if( !left    || left->left()     > segment.left() )
-             left   = &segment;
-           if( !right   || right->right()   < segment.right() )
-             right  = &segment;
-        }
-        // end find four side
-        
-        vector<Node*> cells;
-        bool          circuitCells = model->circuitCell().size();
-        
-        if( circuitCells )  cells = model->circuitCell();
-        else                cells = model->mosCell();
-        
-        for( Node *node : cells )
-        {
-           Rectangle minRect;
+       // setup io pin
+       for( Node *connect : node->connect() )
+       {
+          CircuitNode   *circuitNode  = static_cast<CircuitNode*>( connect );
+          CircuitModel  *model        = circuitNode->model();
 
-           if( circuitCells ) minRect = static_cast<CircuitNode*>( node )
-                                        ->model()->minRect();
-           else               minRect = static_cast<MosNode*>( node )
-                                        ->model()->implant();
-           minRect.setCenter( node->center() );
-           
-           if(  top && top->top() < minRect.bottom() &&
-                top->left () < minRect.right() &&
-                top->right() > minRect.left () )
-             top = nullptr;
-           if(  bottom && bottom->bottom() > minRect.top() &&
-                bottom->left  () < minRect.right() &&
-                bottom->right () > minRect.left () )
-             bottom = nullptr;
-           if(  left && left->left() > minRect.right() &&
-                left->top   () > minRect.bottom () &&
-                left->bottom() < minRect.top    () )
-             left = nullptr;
-           if(  right && right->right() < minRect.left() &&
-                right->top    () > minRect.bottom () &&
-                right->bottom () < minRect.top    () )
-             right = nullptr;
-        }
-        
-        double  hHalf = circuitModel->height() / 2;
-        double  wHalf = circuitModel->width () / 2;
-        int     row;
-        int     col;
-        Layer   segment;
-        
-        if( top )
-        {
-          segment = *top;
-          segment.setCenter( circuitNode->center() + top->center() );
-          row = static_cast<int>( round( ( segment.top() + hHalf ) /
-                                          rowUnit ) );
-          col = static_cast<int>( round( ( segment.center().x()  + wHalf ) /
-                                          colUnit ) );
-          blocks[row][col].value      = netIndex;
-          blocks[row][col].connectNet = net;
-        }
-        if( bottom )
-        {
-          segment = *bottom;
-          segment.setCenter( circuitNode->center() + bottom->center() );
-          row = static_cast<int>( round( ( segment.bottom() + hHalf ) /
-                                          rowUnit ) );
-          col = static_cast<int>( round( ( segment.center().x() + wHalf ) /
-                                          colUnit ) );
-          blocks[row][col].value      = netIndex;
-          blocks[row][col].connectNet = net;
-        }
-        if( left )
-        {
-          segment = *left;
-          segment.setCenter( circuitNode->center() + left->center() );
-          row = static_cast<int>( round( ( segment.center().y() + hHalf ) /
-                                          rowUnit ) );
-          col = static_cast<int>( round( ( segment.left() + wHalf ) /
-                                          colUnit ) );
-          blocks[row][col].value      = netIndex;
-          blocks[row][col].connectNet = net;
-        }
-        if( right )
-        {
-          segment = *right;
-          segment.setCenter( circuitNode->center() + right->center() );
-          row = static_cast<int>( round( ( segment.center().y() + hHalf ) /
-                                          rowUnit ) );
-          col = static_cast<int>( round( ( segment.right() + wHalf ) /
-                                          colUnit ) );
-          blocks[row][col].value      = netIndex;
-          blocks[row][col].connectNet = net;
-        }
-        debug << "netnum : " << netIndex << " net : " << node->name() << endl;
-        for( unsigned int i = blocks.size() - 1 ; i >= 0 ; i-- )
-        {
-           for( unsigned int j = 0 ; j < blocks[i].size() ; j++ )
-              debug << setw( 2 ) << blocks[i][j].value;
-           debug << endl;
-           if( i == 0 ) break;
-        }
-        debug << endl;
+          int           index = connect->searchConnectNode( node->name() );
+          NetNode       *net  = static_cast<NetNode*>( model->io()[index] );
+
+          Layer *top    = nullptr;
+          Layer *bottom = nullptr;
+          Layer *left   = nullptr;
+          Layer *right  = nullptr;
+
+          net->setVisit( 0 );
+
+          // find four side
+          for( Layer &segment : net->segments() )
+          {
+             if( !top     || top->top()       < segment.top() )
+               top    = &segment;
+             if( !bottom  || bottom->bottom() > segment.bottom() )
+               bottom = &segment;
+             if( !left    || left->left()     > segment.left() )
+               left   = &segment;
+             if( !right   || right->right()   < segment.right() )
+               right  = &segment;
+          }
+          // end find four side
+
+          vector<Node*> cells;
+          bool          circuitCells = model->circuitCell().size();
+
+          if( circuitCells )  cells = model->circuitCell();
+          else                cells = model->mosCell();
+
+          // check if io blocked
+          for( Node *node : cells )
+          {
+             Rectangle minRect;
+
+             if( circuitCells ) minRect = static_cast<CircuitNode*>( node )
+                                          ->model()->minRect();
+             else               minRect = static_cast<MosNode*>( node )
+                                          ->model()->implant();
+             minRect.setCenter( node->center() );
+
+             if(  top && top->top() < minRect.top() &&
+                  top->left () < minRect.right() &&
+                  top->right() > minRect.left () )
+               top = nullptr;
+             if(  bottom && bottom->bottom() > minRect.bottom() &&
+                  bottom->left  () < minRect.right() &&
+                  bottom->right () > minRect.left () )
+               bottom = nullptr;
+             if(  left && left->left() > minRect.left() &&
+                  left->top   () > minRect.bottom () &&
+                  left->bottom() < minRect.top    () )
+               left = nullptr;
+             if(  right && right->right() < minRect.right() &&
+                  right->top    () > minRect.bottom () &&
+                  right->bottom () < minRect.top    () )
+               right = nullptr;
+          }
+          // end check if io blocked
+
+          double  hHalf = circuitModel->height() / 2;
+          double  wHalf = circuitModel->width () / 2;
+          int     row;
+          int     col;
+          Layer   segment;
+
+          Layer *layers[] = { top , bottom , left , right };
+
+          for( Layer *layer : layers )
+          {
+             if( !layer ) continue;
+
+             segment = *layer;
+             segment.setCenter( circuitNode->center() + layer->center() );
+
+             if     ( layer == top )
+             {
+               row =  static_cast<int>(
+                      round( ( segment.top() + hHalf ) / rowUnit ) );
+               col =  static_cast<int>(
+                      round( ( segment.center().x() + wHalf ) / colUnit ) );
+             }
+             else if( layer == bottom )
+             {
+               row =  static_cast<int>(
+                      round( ( segment.bottom() + hHalf ) / rowUnit ) );
+               col =  static_cast<int>(
+                      round( ( segment.center().x() + wHalf ) / colUnit ) );
+             }
+             else if( layer == left )
+             {
+               row =  static_cast<int>(
+                      round( ( segment.center().y() + hHalf ) / rowUnit ) );
+               col =  static_cast<int>(
+                      round( ( segment.left() + wHalf ) / colUnit ) );
+             }
+             else if( layer == right )
+             {
+               row =  static_cast<int>(
+                      round( ( segment.center().y() + hHalf ) / rowUnit ) );
+               col =  static_cast<int>(
+                      round( ( segment.right() + wHalf ) / colUnit ) );
+             }
+             blocks[row][col].value      = netIndex;
+             blocks[row][col].connectNet = net;
+             blocks[row][col].detour     = 0;
+             ios.push_back( Point( col , row ) );
+          }
+       }
+       // end setup io pin
+
+       // global routing
+       Point source = ios.front();
+       Point target;
+
+       for( unsigned int i = 1 ; i < ios.size() ; i++ )
+       {
+         target = ios[i];
+       
+         if(  blocks[target.y()][target.x()].connectNet->visit() == 0 &&
+              blocks[source.y()][source.x()].connectNet !=
+              blocks[target.y()][target.x()].connectNet )
+         {
+           queue<Point> sources;
+           Rectangle    rect;
+           int          MAX_DETOUR;
+           int          detour;
+           bool         targeted = false;
+
+           rect.setCenter ( ( source.x() + target.x() ) / 2 ,
+                            ( source.y() + target.y() ) / 2 );
+           rect.setHeight ( abs( source.y() - target.y() ) );
+           rect.setWidth  ( abs( source.x() - target.x() ) );
+
+           MAX_DETOUR = max(  max(  blocks.size() - 1 - rect.top() ,
+                                    blocks[0].size() - 1 - rect.right() ) ,
+                              max(  rect.bottom() , rect.left() ) );
+
+           sources.push( source );
+
+           // find path
+           for( detour = 0 ; detour <= MAX_DETOUR ; detour++ )
+           {
+              const unsigned int SOURCE_NUM = sources.size();
+
+              for( unsigned int i = 0 ; i < SOURCE_NUM ; i++ )
+              {
+                 int row = sources.front().y();
+                 int col = sources.front().x();
+
+                 while( row != target.y() || col != target.x() )
+                 {
+                   // move toward target
+                   if     ( col == target.x() )
+                     if     ( row > target.y() &&
+                              blocks[row-1][col].value != Block::OBSTACLE )
+                       row--;
+                     else if( row < target.y() &&
+                              blocks[row+1][col].value != Block::OBSTACLE )
+                       row++;
+                     else
+                       break;
+                   else if( col > target.x() )
+                     if( blocks[row][col-1].value != Block::OBSTACLE )
+                       col--;
+                     else
+                       if     ( row > target.y() &&
+                              blocks[row-1][col].value != Block::OBSTACLE )
+                         row--;
+                       else if( row < target.y() &&
+                                blocks[row+1][col].value != Block::OBSTACLE )
+                         row++;
+                       else
+                         break;
+                   else
+                     if( blocks[row][col+1].value != Block::OBSTACLE )
+                       col++;
+                     else
+                       if     ( row > target.y() &&
+                              blocks[row-1][col].value != Block::OBSTACLE )
+                         row--;
+                       else if( row < target.y() &&
+                                blocks[row+1][col].value != Block::OBSTACLE )
+                         row++;
+                       else
+                         break;
+                   // end move toward target
+
+                   blocks[row][col].value  = netIndex;
+                   blocks[row][col].detour = detour;
+
+                   // set next detour sources
+                   if(  ( row + 1 - source.y() ) *
+                        ( row + 1 - target.y() ) > 0 &&
+                        blocks[row+1][col].value != Block::OBSTACLE )
+                   {
+                     blocks[row+1][col].value  = netIndex;
+                     blocks[row+1][col].detour = detour + 1;
+                     sources.push( Point( col , row + 1 ) );
+                   }
+                   if(  ( row - 1 - source.y() ) *
+                        ( row - 1 - target.y() ) > 0 &&
+                        blocks[row-1][col].value != Block::OBSTACLE )
+                   {
+                     blocks[row-1][col].value  = netIndex;
+                     blocks[row-1][col].detour = detour + 1;
+                     sources.push( Point( col , row - 1 ) );
+                   }
+                   if(  ( col + 1 - source.x() ) *
+                        ( col + 1 - target.x() ) > 0 &&
+                        blocks[row][col+1].value != Block::OBSTACLE )
+                   {
+                     blocks[row][col+1].value  = netIndex;
+                     blocks[row][col+1].detour = detour + 1;
+                     sources.push( Point( col + 1 , row ) );
+                   }
+                   if(  ( col - 1 - source.x() ) *
+                        ( col - 1 - target.x() ) > 0 &&
+                        blocks[row][col-1].value != Block::OBSTACLE )
+                   {
+                     blocks[row][col-1].value  = netIndex;
+                     blocks[row][col-1].detour = detour + 1;
+                     sources.push( Point( col - 1 , row ) );
+                   }
+                   // end set next detour sources
+                 }
+
+                 if( row == target.y() && col == target.x() )
+                 {
+                   targeted = true;
+                   break;
+                 }
+                 sources.pop();
+              }
+              if( targeted ) break;
+           }
+           // end find path
+
+           // back trace
+           if( targeted )
+           {
+             enum Dircetion
+             {
+               UNKNOWN,
+               UP,
+               DOWN,
+               LEFT,
+               RIGHT
+             };
+
+             vector<Point>  path( 1 , target );
+             int            row           = target.y();
+             int            col           = target.x();
+             int            currentDetour = detour + 1;
+             int            direct;
+             
+             if     ( blocks[row+1][col].value == netIndex )  direct = UP;
+             else if( blocks[row-1][col].value == netIndex )  direct = DOWN;
+             else if( blocks[row][col-1].value == netIndex )  direct = LEFT;
+             else                                             direct = RIGHT;
+
+             while( row != source.y() || col != source.x() )
+             {
+               if     ( col ==  source.x() )
+               {
+                 if( row > source.y() )
+                   if(  blocks[row-1][col].value  == netIndex &&
+                        blocks[row-1][col].detour <= currentDetour )
+                   {
+                     if( direct != DOWN )
+                     {
+                       direct = DOWN;
+                       path.push_back( Point( col , row ) );
+                     }
+                     row--;
+                     currentDetour = blocks[row][col].detour;
+                   }
+                   else
+                   {
+                     if( direct != UP )
+                     {
+                       direct = UP;
+                       path.push_back( Point( col , row ) );
+                     }
+                     row++;
+                     currentDetour = blocks[row][col].detour;
+                   }
+                 else if( row < source.y() )
+                 {
+                   if(  blocks[row+1][col].value  == netIndex &&
+                        blocks[row+1][col].detour <= currentDetour )
+                   {
+                     if( direct != UP )
+                     {
+                       direct = UP;
+                       path.push_back( Point( col , row ) );
+                     }
+                     row++;
+                     currentDetour = blocks[row][col].detour;
+                   }
+                   else
+                   {
+                     if( direct != DOWN )
+                     {
+                       direct = DOWN;
+                       path.push_back( Point( col , row ) );
+                     }
+                     row--;
+                     currentDetour = blocks[row][col].detour;
+                   }
+                 }
+               }
+               else if( col >   source.x() )
+               {
+                 if(  blocks[row][col-1].value  == netIndex &&
+                      blocks[row][col-1].detour <= currentDetour )
+                 {
+                   if( direct != LEFT )
+                   {
+                     direct = LEFT;
+                     path.push_back( Point( col , row ) );
+                   }
+                   col--;
+                   currentDetour = blocks[row][col].detour;
+                 }
+                 else
+                    if( row > source.y() )
+                      if( blocks[row-1][col].value  == netIndex &&
+                          blocks[row-1][col].detour <= currentDetour )
+                      {
+                        if( direct != DOWN )
+                        {
+                          direct = DOWN;
+                          path.push_back( Point( col , row ) );
+                        }
+                        row--;
+                        currentDetour = blocks[row][col].detour;
+                      }
+                      else
+                      {
+                        if( direct != UP )
+                        {
+                          direct = UP;
+                          path.push_back( Point( col , row ) );
+                        }
+                        row++;
+                        currentDetour = blocks[row][col].detour;
+                      }
+                    else if( row < source.y() )
+                    {
+                      if( blocks[row+1][col].value  == netIndex &&
+                          blocks[row+1][col].detour <= currentDetour )
+                      {
+                        if( direct != UP )
+                        {
+                          direct = UP;
+                          path.push_back( Point( col , row ) );
+                        }
+                        row++;
+                        currentDetour = blocks[row][col].detour;
+                      }
+                      else
+                      {
+                        if( direct != DOWN )
+                        {
+                          direct = DOWN;
+                          path.push_back( Point( col , row ) );
+                        }
+                        row--;
+                        currentDetour = blocks[row][col].detour;
+                      }
+                    }
+               }
+               else
+                 if(  blocks[row][col+1].value  == netIndex &&
+                      blocks[row][col+1].detour <= currentDetour )
+                 {
+                   if( direct != RIGHT )
+                   {
+                     direct = RIGHT;
+                     path.push_back( Point( col , row ) );
+                   }
+                   col++;
+                   currentDetour = blocks[row][col].detour;
+                 }
+                 else
+                    if( row > source.y() )
+                      if( blocks[row-1][col].value  == netIndex &&
+                          blocks[row-1][col].detour <= currentDetour )
+                      {
+                        if( direct != DOWN )
+                        {
+                          direct = DOWN;
+                          path.push_back( Point( col , row ) );
+                        }
+                        row--;
+                        currentDetour = blocks[row][col].detour;
+                      }
+                      else
+                      {
+                        if( direct != UP )
+                        {
+                          direct = UP;
+                          path.push_back( Point( col , row ) );
+                        }
+                        row++;
+                        currentDetour = blocks[row][col].detour;
+                      }
+                    else if( row < source.y() )
+                    {
+                      if( blocks[row+1][col].value  == netIndex &&
+                          blocks[row+1][col].detour <= currentDetour )
+                      {
+                        if( direct != UP )
+                        {
+                          direct = UP;
+                          path.push_back( Point( col , row ) );
+                        }
+                        row++;
+                        currentDetour = blocks[row][col].detour;
+                      }
+                      else
+                      {
+                        if( direct != DOWN )
+                        {
+                          direct = DOWN;
+                          path.push_back( Point( col , row ) );
+                        }
+                        row--;
+                        currentDetour = blocks[row][col].detour;
+                      }
+                    }
+             }
+             path.push_back( source );
+             
+             Layer layer;
+             
+             for( unsigned int i = 0 ; i < path.size() - 1 ; i++ )
+                if      ( path[i].x() == path[i+1].x() )
+                {
+                  layer.setType ( Layer::METAL1 );
+                  layer.setPin  ( path[i].y() , path[i+1].y() );
+                  layer.setTrack( path[i].x() );
+                  node->segments().push_back( layer );
+                }
+                else if ( path[i].y() == path[i+1].y() )
+                {
+                  layer.setType ( Layer::METAL2 );
+                  layer.setPin  ( path[i].x() , path[i+1].x() );
+                  layer.setTrack( path[i].y() );
+                  node->segments().push_back( layer );
+                }
+             
+             for( Point &point : path )
+                debug << point << " ";
+             debug << endl;
+             
+             for( Layer &layer : node->segments() )
+                debug << layer << endl;
+             debug << endl;
+           }
+           // end back trace
+         }
+         source = target;
+       }
+
+       // route circuitModel io pin
+       // find corner point
+       int sideDist = INT_MAX;
+
+       for( Point &ioPin : ios )
+       {
+          int sides[] =
+            { static_cast<int>( blocks.size() - 1 - ioPin.y() ) ,
+              static_cast<int>( ioPin.y() ) ,
+              static_cast<int>( blocks[0].size() - 1 - ioPin.x() ) ,
+              static_cast<int>( ioPin.x() ) };
+
+          for( int side : sides )
+             if( sideDist > side )
+             {
+               sideDist = side;
+               source   = ioPin;
+             }
+       }
+       // end find corner point
+       // route from corner point
+       enum Direction
+       {
+         UP,
+         DOWN,
+         LEFT,
+         RIGHT
+       };
+       
+       queue<Point> waveFront;
+       int          waveFrontNum;
+       int          waveIndex = 0;
+       bool         finished  = false;
+       int          direction;
+       
+       waveFront.push( source );
+       blocks[source.y()][source.x()].visit = netIndex;
+       target = source;
+
+       do
+       {
+         waveFrontNum = waveFront.size();
+         if( waveFrontNum == 0 ) break;
+         
+         for( int i = 0 ; i < waveFrontNum ; i++ )
+         {
+            unsigned int row = waveFront.front().y();
+            unsigned int col = waveFront.front().x();
+            
+            if( blocks[row+1][col].value != Block::OBSTACLE &&
+                blocks[row+1][col].visit != netIndex )
+            {
+              blocks[row+1][col].value  = netIndex;
+              blocks[row+1][col].visit  = netIndex;
+              blocks[row+1][col].detour = waveIndex;
+              if( row + 1 == blocks.size() - 1 )
+              {
+                source.set( col , row + 1 );
+                finished  = true;
+                direction = DOWN;
+                break;
+              }
+              waveFront.push( Point( col , row + 1 ) );
+            }
+            if( blocks[row-1][col].value != Block::OBSTACLE &&
+                blocks[row-1][col].visit != netIndex )
+            {
+              blocks[row-1][col].value  = netIndex;
+              blocks[row-1][col].visit  = netIndex;
+              blocks[row-1][col].detour = waveIndex;
+              if( row - 1 == 0 )
+              {
+                source.set( col , row - 1 );
+                finished  = true;
+                direction = UP;
+                break;
+              }
+              waveFront.push( Point( col , row - 1 ) );
+            }
+            if( blocks[row][col+1].value != Block::OBSTACLE &&
+                blocks[row][col+1].visit != netIndex )
+            {
+              blocks[row][col+1].value  = netIndex;
+              blocks[row][col+1].visit  = netIndex;
+              blocks[row][col+1].detour = waveIndex;
+              if( col + 1 == blocks[0].size() - 1 )
+              {
+                source.set( col + 1 , row );
+                finished  = true;
+                direction = LEFT;
+                break;
+              }
+              waveFront.push( Point( col + 1 , row ) );
+            }
+            if( blocks[row][col-1].value != Block::OBSTACLE &&
+                blocks[row][col-1].visit != netIndex )
+            {
+              blocks[row][col-1].value  = netIndex;
+              blocks[row][col-1].visit  = netIndex;
+              blocks[row][col-1].detour = waveIndex;
+              if( col - 1 == 0 )
+              {
+                source.set( col - 1 , row );
+                finished  = true;
+                direction = RIGHT;
+                break;
+              }
+              waveFront.push( Point( col - 1 , row ) );
+            }
+            waveFront.pop();
+         }
+         waveIndex++;
+
+       }while( !finished );
+
+       vector<Point>  path( 1 , source );
+       unsigned int   row = source.y();
+       unsigned int   col = source.x();
+
+       for( int i = waveIndex - 1 ; i >= 0 ; i-- )
+       {
+          if( row != blocks.size() - 1 &&
+              blocks[row+1][col].visit  == netIndex &&
+              blocks[row+1][col].detour == i )
+          {
+            row++;
+            if( direction != UP )     path.push_back( Point( col , row ) );
+          }
+          if( row != 0 &&
+              blocks[row-1][col].visit  == netIndex &&
+              blocks[row-1][col].detour == i )
+          {
+            row--;
+            if( direction != DOWN )   path.push_back( Point( col , row ) );
+          }
+          if( col != blocks[0].size() - 1 &&
+              blocks[row][col+1].visit  == netIndex &&
+              blocks[row][col+1].detour == i )
+          {
+            col++;
+            if( direction != RIGHT )  path.push_back( Point( col , row ) );
+          }
+          if( col != 0 &&
+              blocks[row+1][col].visit  == netIndex &&
+              blocks[row+1][col].detour == i )
+          {
+            col--;
+            if( direction != LEFT )   path.push_back( Point( col , row ) );
+          }
+       }
+       
+       if(  ( row + 1 == target.y() && direction != UP    ) ||
+            ( row - 1 == target.y() && direction != DOWN  ) ||
+            ( col + 1 == target.x() && direction != RIGHT ) ||
+            ( col - 1 == target.x() && direction != LEFT  ) )
+         path.push_back( Point( col , row ) );
+       path.push_back( target );
+       
+       Layer layer;
+       
+       for( unsigned int i = 0 ; i < path.size() - 1 ; i++ )
+       {
+          if( path[i].x() == path[i+1].x() )
+          {
+            layer.setType ( Layer::METAL1 );
+            layer.setPin  ( path[i].y() , path[i+1].y() );
+            layer.setTrack( path[i].x() );
+            node->segments().push_back( layer );
+          }
+          else
+          {
+            layer.setType ( Layer::METAL2 );
+            layer.setPin  ( path[i].x() , path[i+1].x() );
+            layer.setTrack( path[i].y() );
+            node->segments().push_back( layer );
+          }
+       }
+       
+       for( Layer &layer : node->segments() )
+          debug << layer << endl;
+       debug << endl;
+       // route from corner point
+       // end route circuitModel io pin
+       // end global routing
      }
+
      debug << "netnum : " << netIndex << " net : " << node->name() << endl;
      for( unsigned int i = blocks.size() - 1 ; i >= 0 ; i-- )
      {
         for( unsigned int j = 0 ; j < blocks[i].size() ; j++ )
-           debug << setw( 2 ) << blocks[i][j].value;
+           switch( blocks[i][j].value )
+           {
+             case Block::SPACE:     debug << "  "; break;
+             case Block::OBSTACLE:  debug << "¢i"; break;
+             default:               debug << setw( 2 );
+                                    debug << blocks[i][j].value; break;
+           }
         debug << endl;
         if( i == 0 ) break;
      }
      debug << endl;
-     // end setup io pin
+     // end route io pin
+     
+     for( Point &io : ios )
+        blocks[io.y()][io.x()].value = Block::OBSTACLE;
+     
      netIndex++;
   }
   
@@ -1065,7 +1570,13 @@ void ICRouting::gridRough()
   for( unsigned int i = blocks.size() - 1 ; i >= 0 ; i-- )
   {
      for( unsigned int j = 0 ; j < blocks[i].size() ; j++ )
-        debug << setw( 2 ) << blocks[i][j].value;
+        switch( blocks[i][j].value )
+        {
+          case Block::SPACE:     debug << "  "; break;
+          case Block::OBSTACLE:  debug << "¢i"; break;
+          default:               debug << setw( 2 );
+                                 debug << blocks[i][j].value; break;
+        }
      debug << endl;
      if( i == 0 ) break;
   }

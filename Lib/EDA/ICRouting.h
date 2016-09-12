@@ -25,6 +25,7 @@ class ICRouting
 
     CircuitModel *circuitModel;
     
+    const int                     PMOS_BIAS = 0;
     int                           NMOS_BIAS;
     int                           PMOS_FIRST;
     int                           NMOS_FIRST;
@@ -49,17 +50,18 @@ class ICRouting
     void gridDetail ();
 };
 
-enum BlockValue
-{
-  SPACE     = -1,
-  OBSTACLE  = -2
-};
-
 struct Block
 {
-  int                   value       = SPACE;
-  int                   crossNum    = 0;
-  int                   detour      = 0;
+  enum Value
+  {
+    SPACE     = -1,
+    OBSTACLE  = -2
+  };
+
+  int                   value;
+  int                   crossNum  = 0;
+  int                   detour;
+  int                   visit;
   NetNode               *connectNet;
   std::vector<NetNode*> crossNet;
 };
