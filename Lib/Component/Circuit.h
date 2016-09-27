@@ -35,10 +35,10 @@ class Circuit
 
     inline bool isMainCircuit() const;
 
-    inline void setTechFile   ( TechFile  *techFile  	);
-    inline void setMainCircuit( bool      mainCircuit	);
+    inline void setTechFile   ( TechFile  *techFile   );
+    inline void setMainCircuit( bool      mainCircuit );
 
-    Node*   searchNode  ( Node  ::Type type , const string 	&name  	);
+    Node*   searchNode  ( Node  ::Type type , const string  &name   );
     Model*  searchModel ( Model ::Type type , Model         *model  );
 
     bool generate();
@@ -71,19 +71,19 @@ inline vector<Node*>& Circuit::net        () { return nodes[Node::NET];     }
 inline vector<Node*>& Circuit::mosCell    () { return nodes[Node::MOS];     }
 inline vector<Node*>& Circuit::circuitCell() { return nodes[Node::CIRCUIT]; }
 
-inline vector<Model*>& Circuit::mosModel    ()
+inline vector<Model*>& Circuit::mosModel()
 { return models[Model::MOS];    }
-inline vector<Model*>& Circuit::circuitModel ()
+inline vector<Model*>& Circuit::circuitModel()
 { return models[Model::CIRCUIT]; }
 
-inline int Circuit::ioNum  () const { return nodes[Node::IO] .size(); }
-inline int Circuit::netNum () const { return nodes[Node::NET].size(); }
+inline int Circuit::ioNum () const { return nodes[Node::IO] .size(); }
+inline int Circuit::netNum() const { return nodes[Node::NET].size(); }
 
 inline bool Circuit::isMainCircuit() const { return main; }
 
-inline void Circuit::setTechFile   ( TechFile     *techFile   )
+inline void Circuit::setTechFile   ( TechFile *techFile   )
 { tech = techFile;    }
-inline void Circuit::setMainCircuit( bool         mainCircuit )
+inline void Circuit::setMainCircuit( bool     mainCircuit )
 { main = mainCircuit; }
 // end ICModel inline member function
 

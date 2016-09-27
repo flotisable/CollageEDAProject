@@ -11,24 +11,27 @@ bool SkillLayout::drawRect( Layer::Type layer , double lbX , double lbY ,
 {
   if( rtY - lbY == 0 || rtX - lbX == 0 ) return false;
 
-  return file << DRAW_RECTANGLE << "( "
-              << GET_REPRESENT  << "() "
-              << "\"" << Layer::map( layer )  << "\" "
-              << "list( "
-              << lbX  << ":" << lbY << " "
-              << rtX  << ":" << rtY << " ) )\n";
+  file  << DRAW_RECTANGLE << "( "
+        << GET_REPRESENT  << "() "
+        << "\"" << Layer::map( layer )  << "\" "
+        << "list( "
+        << lbX  << ":" << lbY << " "
+        << rtX  << ":" << rtY << " ) )\n";
+
+  return static_cast<bool>( file );
 }
 
 bool SkillLayout::drawInst( const string &lib , const string &cell ,
                             const string &view ,
                             double x , double y , double rotate )
 {
-  return file << DRAW_INSTANCE  << "( "     << GET_REPRESENT  << "() "
-                                << "( \""   << GET_CELLVIEW   << "\" "
-                                << "\""     << lib            << "\" "
-                                << "\""     << cell           << "\""
-                                << " \""    << view           << "\" )"
-                                << " nil "  << x              << ":" << y
-                                << " \"R"   << rotate         << "\" )\n";
+  file << DRAW_INSTANCE << "( "     << GET_REPRESENT  << "() "
+                        << "( \""   << GET_CELLVIEW   << "\" "
+                        << "\""     << lib            << "\" "
+                        << "\""     << cell           << "\""
+                        << " \""    << view           << "\" )"
+                        << " nil "  << x              << ":" << y
+                        << " \"R"   << rotate         << "\" )\n";
+  return static_cast<bool>( file );
 }
 // end SkillLayout public member function

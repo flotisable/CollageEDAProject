@@ -23,8 +23,8 @@ class Node : public Rectangle
       UNKNOWN
     };
 
-		inline Node( Type type = UNKNOWN );
-		inline Node( const string &name , Type type = UNKNOWN );
+    inline Node( Type type = UNKNOWN );
+    inline Node( const string &name , Type type = UNKNOWN );
 
     static inline bool costCompare( Node* front , Node* back );
     static inline bool costCompare( Node  front , Node  back );
@@ -49,7 +49,7 @@ class Node : public Rectangle
     int     mVisit;
     int     mCost;
 
-    vector<Node*>	mConnect;
+    vector<Node*> mConnect;
 };
 
 // Node inline member function

@@ -7,11 +7,11 @@
 
 Circuit::~Circuit()
 {
-	for( vector<Node*> &nodeVector : nodes )
+  for( vector<Node*> &nodeVector : nodes )
      for( Node *node : nodeVector )
         if( node ) delete node;
 
-	for( vector<Model*> &modelVector : models )
+  for( vector<Model*> &modelVector : models )
      for( Model *model : modelVector )
         if( model ) delete model;
 }

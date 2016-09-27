@@ -34,7 +34,7 @@ class Rectangle // ¯x§Î
 
   private:
 
-		Point   mCenter;
+    Point   mCenter;
     double  mHeight;
     double  mWidth;
 };

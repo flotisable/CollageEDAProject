@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <limits>
 
 string Layer::TYPES[Layer::TYPE_NUM];
 
@@ -22,13 +23,11 @@ bool Layer::read( const char *fileName )
 
   if( file.is_open() )
   {
-    string buffer;
-
     for( string &rule : TYPES )
     {
-       if( !getline( file , buffer ) ) break;
+       if( !file.ignore( numeric_limits<streamsize>::max() , '=' ) ) break;
 
-       rule = buffer.substr( buffer.rfind( ' ' ) + 1 );
+       file >> rule;
     }
     return true;
   }

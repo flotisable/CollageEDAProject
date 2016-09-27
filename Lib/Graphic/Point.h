@@ -2,6 +2,7 @@
 #define POINT_H
 
 #include <ostream>
+#include <cmath>
 
 class Point // 二維點座標
 {
@@ -33,6 +34,11 @@ class Point // 二維點座標
 
 // Point non-member function
 std::ostream& operator<<( std::ostream &out , const Point &point );
+
+inline double manhattanDistance( const Point &a , const Point &b )
+{
+ double md = abs( a.x() - b.x() ) + abs( a.y() - b.y() );
+ return md; }
 // end Point non-member function
 
 // Point inline member funcion

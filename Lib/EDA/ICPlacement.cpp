@@ -196,10 +196,11 @@ void ICPlacement::mosDetail()
                         nmos->implant().height() ) / 2 + p2n;
   double  minWidth  = max(  pmosNum , static_cast<int>( mosNodes.size() -
                             pmosNum ) ) *mosWidth;
-  double  height    = minHeight + ( nimpSpace + pimpSpace ) / 2;
+  double  height    = minHeight + ( nimpSpace + pimpSpace ) / 2 + 2 * channel;
   double  width     = minWidth + 2 * channel;
   double  xbias     = ( pmosNum & 1 ) ? 0 : -mosWidth / 2 ;
-  double  ybias     = ( height - pimpSpace - pmos->implant().height() ) / 2;
+  double  ybias     = ( height - pimpSpace - pmos->implant().height() ) / 2 -
+                      channel;
 
   for( Node *mosNode : mosNodes )
   {
@@ -419,10 +420,9 @@ void ICPlacement::circuitDetail()
      int          front   = -1;
      unsigned int end     = contour.size() - 1;
      double       localXr;
-     double       halfH   = node->height()  / 2;
-     double       halfW   = node->width ()  / 2;
-     Rectangle    minRect = static_cast<CircuitNode*>( node )->model()
-                            ->minRect();
+     double       halfH   = node->height() / 2;
+     double       halfW   = node->width () / 2;
+     Rectangle    minRect = static_cast<CircuitNode*>( node )->model()->minRect();
 
      if( node->center().x() == xMin )  localX = localXr = 0;
 

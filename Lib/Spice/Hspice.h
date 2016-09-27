@@ -90,7 +90,7 @@ inline void Hspice::setID( ID index , const string &name )
 { id[index] = name; }
 
 inline bool Hspice::isNullChar( char c )
-{ return ( c == ' ' || c == '\t' ); }
+{ return ( c == ' ' || c == '\t' || c == '\r' ); }
 
 #endif
 

@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <limits>
 
 string SpacingRule::TYPES[SpacingRule::TYPE_NUM];
 
@@ -12,13 +13,11 @@ bool SpacingRule::read( const char *fileName )
   
   if( file.is_open() )
   {
-    string buffer;
-  
     for( string &rule : TYPES )
     {
-       if( !getline( file , buffer ) ) break;
-       
-       rule = buffer.substr( buffer.rfind( ' ' ) + 1 );
+       if( !file.ignore( numeric_limits<streamsize>::max() , '=' ) ) break;
+
+       file >> rule;
     }
     return true;
   }

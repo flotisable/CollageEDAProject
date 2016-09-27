@@ -24,10 +24,10 @@ Hspice::Hspice()
 bool Hspice::read( const char *fileName )
 {
   if( file.is_open() ) file.close();
-	file.open( fileName , ios::in );
+  file.open( fileName , ios::in );
 	
-	if( file.is_open() )
-	{
+  if( file.is_open() )
+  {
     getline( file , buffer ); // comment
 
     // read data
@@ -35,8 +35,9 @@ bool Hspice::read( const char *fileName )
     {
       if( buffer.empty() || buffer[0] == '*' ) continue;
       getWord();
+      if( word.empty() ) continue;
 
-			if( word[SUBCKT_ID] == SUBCKT_HEAD_KEYWORD ) // read subckt
+      if( word[SUBCKT_ID] == SUBCKT_HEAD_KEYWORD ) // read subckt
       {
         CircuitModel *model = circuitBoard->searchModel( word[SUBCKT_NAME] );
 
@@ -48,25 +49,25 @@ bool Hspice::read( const char *fileName )
         setupModel( model );
       }
     }
-		file.close();
-		return true;
-	}
+    file.close();
+    return true;
+  }
   return false;
 }
 
 bool Hspice::write( const char *fileName )
 {
   if( file.is_open() ) file.close();
-	file.open( fileName , ios::out );
+  file.open( fileName , ios::out );
 
-	if( file.is_open() )
-	{
+  if( file.is_open() )
+  {
     for( CircuitModel *model : circuitBoard->model() )
        writeCircuitModel( model );
-		file.close();
-		return true;
-	}
-	return false;
+    file.close();
+    return true;
+  }
+  return false;
 }
 
 
@@ -74,20 +75,21 @@ void Hspice::setupModel( Circuit *model )
 {
   // io pin
   for( unsigned int i = SUBCKT_NET ; i < word.size() ; i++ )
-	{
+  {
     NetNode *node = new NetNode( word[i] );
 
-    if      (	word[i] == id[VDD] )  node->setType( Node::VDD  );
+    if      ( word[i] == id[VDD] )  node->setType( Node::VDD  );
     else if ( word[i] == id[GND] )  node->setType( Node::VSS  );
     else                            node->setType( Node::IO   );
 
     model->io().push_back( node );
-	}
+  }
 
   while( getline( file , buffer ) ) // net and cell
   {
-    if( buffer.empty()  ) continue;
+    if( buffer.empty() ) continue;
     getWord();
+    if( word.empty() ) continue;
     if( word[0] == SUBCKT_TAIL_KEYWORD || file.eof() )	return;
 
     switch( word[0][0] )
@@ -116,8 +118,8 @@ void Hspice::setupMos( Circuit *model )
   MosModel *mosModel = new MosModel;
 
   wordIndex++;
-  if      (	word[TYPE] == id[PMOS] ) mosModel->Mos::setType( Mos::PMOS );
-  else if (	word[TYPE] == id[NMOS] ) mosModel->Mos::setType( Mos::NMOS );
+  if      ( word[TYPE] == id[PMOS] ) mosModel->Mos::setType( Mos::PMOS );
+  else if ( word[TYPE] == id[NMOS] ) mosModel->Mos::setType( Mos::NMOS );
 
   wordIndex++;
   if( wordIndex < word.size() )
@@ -228,12 +230,12 @@ void Hspice::writeCircuitModel( CircuitModel *model )
      file << *static_cast<NetNode*>( node ) << endl;
 
   for( Node *node : model->net() )
-		 file << *static_cast<NetNode*>( node ) << endl;
+     file << *static_cast<NetNode*>( node ) << endl;
 
-	for( Node *node : model->mosCell() )
-		 file << *static_cast<MosNode*>( node ) << endl;
+  for( Node *node : model->mosCell() )
+     file << *static_cast<MosNode*>( node ) << endl;
 
-	for( Node *node : model->circuitCell() )
+  for( Node *node : model->circuitCell() )
      file << *static_cast<CircuitNode*>( node ) << endl;
 
   file << endl;

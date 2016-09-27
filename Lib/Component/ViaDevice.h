@@ -89,7 +89,7 @@ inline void ViaDevice::setCenter    ( const Point &center   )
 inline void ViaDevice::setCenter    ( double x , double y   )
 { mCenter     = Point( x , y ); }
 inline void ViaDevice::setImpAllowed( bool allowed )
-{ mImpAllowed  = allowed;        }
+{ mImpAllowed = allowed;        }
 
 inline void ViaDevice::setLowerLayer( Layer::Type layer       )
 { if( via == Layer::CONTACT ) lower.setType( layer ); }
